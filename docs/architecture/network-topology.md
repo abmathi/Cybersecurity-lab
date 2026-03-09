@@ -1,103 +1,131 @@
 # Network Topology
 
-This document describes the full network architecture of the home lab, including all VLANs, IP addressing, firewall zones, and VM placement.
+This document describes the full network architecture of the home lab, including all systems, IP addressing, and traffic flows.
 
 ---
 
 ## Overview
 
-The lab uses a single physical host running **Proxmox VE** as the hypervisor. A **pfSense** VM acts as the central router and firewall, providing VLAN-based network segmentation to isolate each security zone.
+The lab uses a **flat home LAN (192.168.0.0/24)** — no VLANs or dedicated hypervisor. Each physical machine (Attack Mac, SOC Mac, and a dedicated Windows host) runs VMs or acts as the host directly. All systems communicate over the flat home network.
 
 ```
-Physical Host (Proxmox VE)
-└── Virtual Switch (vmbr0)
-    └── pfSense (Router/Firewall)
-        ├── WAN — uplink to home router (192.168.1.0/24)
-        ├── VLAN 10 — Attack Segment    (10.10.10.0/24)
-        ├── VLAN 20 — Corporate Segment (10.20.20.0/24)
-        ├── VLAN 30 — DMZ / Monitoring  (10.30.30.0/24)
-        └── VLAN 99 — Management        (10.0.0.0/24)
+Home LAN — 192.168.0.0/24
+Default Gateway: 192.168.0.1
+
+┌───────────────────────────────────────────────────────────────────────┐
+│                         192.168.0.0/24                                │
+│                                                                       │
+│  ┌─────────────────────┐   ┌─────────────────────┐                   │
+│  │  Attack Mac         │   │  DC01 (Windows Svr) │                   │
+│  │  Intel Core i7      │   │  corp.lab DC         │                   │
+│  │  └── Kali Linux VM  │   │  Static IP           │                   │
+│  │      (Attacker)     │   │  AD DS + DNS         │                   │
+│  └─────────────────────┘   │  Sysmon + WEF (WEC)  │                   │
+│                            │  Elastic Agent       │                   │
+│                            └─────────────────────┘                   │
+│                                       ↑ WEF                           │
+│                            ┌─────────────────────┐                   │
+│                            │  WS01 (Windows 10)  │                   │
+│                            │  Joined: corp.lab    │                   │
+│                            │  Sysmon + WEF client │                   │
+│                            └─────────────────────┘                   │
+│                                                                       │
+│  ┌────────────────────────────────────────────────────────────────┐   │
+│  │  SOC Mac (Apple Silicon M1 Pro)                                │   │
+│  │  └── Ubuntu Server VM (ARM64 — headless / CLI-only)           │   │
+│  │      └── Elastic Stack (self-hosted, free Basic licence)      │   │
+│  │          ├── Elasticsearch  (port 9200)                       │   │
+│  │          ├── Kibana         (port 5601)                       │   │
+│  │          └── Fleet Server   (port 8220)                       │   │
+│  └────────────────────────────────────────────────────────────────┘   │
+└───────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## IP Address Plan
+## Systems
 
-| VLAN | Segment Name | Subnet | Gateway | Purpose |
-|------|-------------|--------|---------|---------|
-| 10 | Attack | 10.10.10.0/24 | 10.10.10.1 | Offensive tools (Kali Linux) |
-| 20 | Corporate | 10.20.20.0/24 | 10.20.20.1 | Windows AD domain, targets |
-| 30 | DMZ / Monitoring | 10.30.30.0/24 | 10.30.30.1 | Security Onion, Splunk, SIEM |
-| 99 | Management | 10.0.0.0/24 | 10.0.0.1 | Proxmox, out-of-band access |
-
----
-
-## Virtual Machines
-
-| VM Name | OS | VLAN | IP Address | Role |
-|---------|----|------|------------|------|
-| pfsense | pfSense 2.7 | All (router) | 10.x.x.1 per VLAN | Firewall / Router |
-| kali | Kali Linux 2024 | VLAN 10 | 10.10.10.10 | Attacker machine |
-| winserver2019 | Windows Server 2019 | VLAN 20 | 10.20.20.10 | Active Directory / Domain Controller |
-| win10-client1 | Windows 10 | VLAN 20 | 10.20.20.20 | Domain-joined workstation |
-| win10-client2 | Windows 10 | VLAN 20 | 10.20.20.21 | Domain-joined workstation |
-| metasploitable3 | Ubuntu 14.04 | VLAN 20 | 10.20.20.30 | Intentionally vulnerable Linux target |
-| dvwa | Ubuntu 20.04 | VLAN 20 | 10.20.20.40 | Deliberately vulnerable web app |
-| security-onion | Security Onion 2.4 | VLAN 30 | 10.30.30.10 | IDS / NSM (tap on VLAN 20) |
-| splunk | Ubuntu 22.04 | VLAN 30 | 10.30.30.20 | SIEM log aggregation |
-| wazuh | Ubuntu 22.04 | VLAN 30 | 10.30.30.30 | EDR / HIDS manager |
+| Hostname | OS | Role | IP | Notes |
+|----------|----|------|----|-------|
+| `Attack Mac` | macOS (Intel i7) | Attack host | 192.168.0.x (DHCP) | Runs Kali Linux VM |
+| `kali` | Kali Linux (VM) | Attacker | 192.168.0.x (DHCP) | Impacket, CrackMapExec, Hashcat |
+| `DC01` | Windows Server | Domain Controller | Static (192.168.0.x) | corp.lab, AD DS, DNS, WEF WEC, Sysmon, Elastic Agent |
+| `WS01` | Windows 10 / 11 | Workstation | DHCP (corp.lab) | Domain-joined, Sysmon, WEF client |
+| `SOC Mac` | macOS (Apple Silicon M1 Pro) | SOC / SIEM host | 192.168.0.x | Runs Ubuntu Server VM |
+| `ubuntu-siem` | Ubuntu Server (ARM64 VM) | Elastic Stack host | Static (192.168.0.x) | Elasticsearch, Kibana, Fleet Server |
 
 ---
 
-## Firewall Rules Summary
+## Data Flows
 
-### Attack Segment → Corporate Segment (VLAN 10 → VLAN 20)
-| Action | Protocol | Source | Destination | Notes |
-|--------|----------|--------|-------------|-------|
-| Allow | Any | 10.10.10.0/24 | 10.20.20.0/24 | Simulated attack traffic |
-| Block | Any | 10.10.10.0/24 | 10.0.0.0/24 | Prevent management access from attacker |
+### Log Collection Pipeline
 
-### Corporate Segment → DMZ (VLAN 20 → VLAN 30)
-| Action | Protocol | Source | Destination | Notes |
-|--------|----------|--------|-------------|-------|
-| Allow | Syslog/TCP 514 | 10.20.20.0/24 | 10.30.30.20 | Log forwarding to Splunk |
-| Allow | Wazuh/TCP 1514 | 10.20.20.0/24 | 10.30.30.30 | Agent communication to Wazuh |
-| Block | Any | 10.20.20.0/24 | 10.30.30.0/24 | No direct corp → monitoring access |
+```
+WS01 (Sysmon + Windows Event Log)
+  │
+  │  Windows Event Forwarding (WEF / WinRM)
+  ▼
+DC01 (WEC Collector — Forwarded Events log)
+  │
+  │  Elastic Agent (Windows + Sysmon integrations)
+  ▼
+Fleet Server (ubuntu-siem)
+  │
+  ▼
+Elasticsearch → Kibana (Elastic Security)
+```
 
-### DMZ → Everywhere
-| Action | Protocol | Source | Destination | Notes |
-|--------|----------|--------|-------------|-------|
-| Block | Any | 10.30.30.0/24 | 10.10.10.0/24 | Monitoring never reaches attack segment |
-| Block | Any | 10.30.30.0/24 | 10.20.20.0/24 | Monitoring is read-only |
+### Attack Traffic Flow
 
-### Management (VLAN 99)
-| Action | Protocol | Source | Destination | Notes |
-|--------|----------|--------|-------------|-------|
-| Allow | Any | 10.0.0.0/24 | Any | Full management access |
-| Block | Any | Any (other) | 10.0.0.0/24 | Only management VLAN can reach management net |
+```
+Kali Linux VM
+  │  Kerberoasting, password spray, lateral movement
+  ▼
+DC01 / WS01
+  │  Events generated (4769, 4625, 4624, 7045, etc.)
+  ▼
+Elastic Security (alerts + investigation timeline)
+```
 
 ---
 
-## Monitoring / Span Port
+## Domain Configuration
 
-Security Onion monitors traffic on **VLAN 20** via a SPAN (mirrored) port configured on the virtual switch in Proxmox. This ensures all inter-VM traffic in the Corporate segment is captured for IDS analysis without altering the network path.
+| Setting | Value |
+|---------|-------|
+| Domain Name | `corp.lab` |
+| NetBIOS Name | `CORP` |
+| Domain Controller | `DC01` |
+| DNS Server | DC01 static IP |
+| Kerberos | Configured and functional (no time skew) |
+| WEF Subscription | Push (DC01 as WEC; WS01 as source) |
+
+---
+
+## Elastic Stack Configuration
+
+| Component | Port | Notes |
+|-----------|------|-------|
+| Elasticsearch | 9200 | Single-node cluster, Basic licence |
+| Kibana | 5601 | Elastic Security app enabled |
+| Fleet Server | 8220 | Manages Elastic Agent on DC01 |
 
 ---
 
 ## Physical Hardware
 
-| Component | Specification |
-|-----------|--------------|
-| CPU | Intel Core i7-12700 (12 cores / 20 threads) |
-| RAM | 64 GB DDR4 |
-| Storage | 1 TB NVMe SSD (VMs) + 2 TB HDD (snapshots/archives) |
-| NIC | Intel dual-port gigabit NIC (one for WAN, one for lab VLANs) |
-| Hypervisor | Proxmox VE 8.x |
+| Machine | Hardware |
+|---------|---------|
+| Attack Mac | Intel Core i7, macOS |
+| SOC Mac | Apple Silicon M1 Pro, macOS |
+| DC01 / WS01 | Dedicated Windows machines on home LAN |
 
 ---
 
 ## References
 
-- [pfSense Documentation](https://docs.netgate.com/pfsense/en/latest/)
-- [Proxmox VE Documentation](https://pve.proxmox.com/pve-docs/)
-- [Security Onion Documentation](https://docs.securityonion.net/)
+- [Elastic Fleet Server Documentation](https://www.elastic.co/guide/en/fleet/current/fleet-server.html)
+- [Sysmon Documentation](https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon)
+- [Windows Event Forwarding (WEF) Documentation](https://learn.microsoft.com/en-us/windows/security/threat-protection/use-windows-event-forwarding-to-assist-in-intrusion-detection)
+- [Elastic Agent Documentation](https://www.elastic.co/guide/en/fleet/current/elastic-agent-installation.html)
+

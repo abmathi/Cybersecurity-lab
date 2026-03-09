@@ -1,6 +1,6 @@
-# Cybersecurity Home Lab
+# Cybersecurity Home Lab — SOC / Blue Team Detection Lab
 
-A fully documented cybersecurity home lab built to develop and demonstrate hands-on skills in network security, penetration testing, incident response, and security operations — designed to showcase practical experience to future employers.
+A fully documented cybersecurity home lab focused on **SOC / Blue Team detection and investigation**, not just attacks. Built to demonstrate hands-on experience with Elastic SIEM, Windows Event Forwarding, Sysmon, Active Directory attack detection, and real-time alerting — designed to showcase practical experience to future employers.
 
 ---
 
@@ -9,6 +9,7 @@ A fully documented cybersecurity home lab built to develop and demonstrate hands
 - [Overview](#overview)
 - [Lab Objectives](#lab-objectives)
 - [Network Architecture](#network-architecture)
+- [Lab Status](#lab-status)
 - [Technologies & Tools](#technologies--tools)
 - [Documentation](#documentation)
 - [Projects & Labs](#projects--labs)
@@ -18,13 +19,13 @@ A fully documented cybersecurity home lab built to develop and demonstrate hands
 
 ## Overview
 
-This home lab simulates a small enterprise network environment with dedicated attack, defense, and monitoring segments. It provides a safe, isolated environment for practicing real-world cybersecurity scenarios including:
+This home lab simulates a small enterprise environment with a dedicated attack platform, a Windows Active Directory domain, and a self-hosted Elastic SIEM stack. It provides a safe, isolated environment for practising real-world SOC scenarios including:
 
-- Simulated attacks and penetration testing
-- Threat detection and incident response
-- Log aggregation and SIEM analysis
-- Vulnerability assessment and remediation
-- Active Directory management and exploitation
+- Active Directory attacks (Kerberoasting, password spraying, lateral movement)
+- Real-time log ingestion via Windows Event Forwarding and Elastic Agent
+- Threat detection with Sysmon + Elastic Security detection rules
+- Custom alert creation and investigation workflows
+- SOC analyst skills mapped to real attacker TTPs (MITRE ATT&CK)
 
 ---
 
@@ -32,53 +33,82 @@ This home lab simulates a small enterprise network environment with dedicated at
 
 | Objective | Description |
 |-----------|-------------|
-| **Hands-on Practice** | Apply cybersecurity concepts learned through coursework and certifications in a real environment |
-| **Tool Proficiency** | Gain experience with industry-standard security tools (Kali Linux, Splunk, Suricata, pfSense, etc.) |
-| **Attack Simulation** | Safely simulate offensive techniques to understand attacker TTPs (Tactics, Techniques, and Procedures) |
-| **Defensive Operations** | Build and tune detection rules, analyze logs, and practice incident response |
-| **Portfolio Building** | Document all lab activities to demonstrate skills to prospective employers |
+| **SOC / Blue Team Focus** | Build detection capabilities, not just attack tooling — tune rules, triage alerts, investigate incidents |
+| **Elastic SIEM Proficiency** | Ingest Windows event logs, Sysmon telemetry, and forwarded events; build custom detection rules and dashboards |
+| **Active Directory Security** | Deploy a realistic AD domain (corp.lab) and detect common attacks (Kerberoasting, Pass-the-Hash, spray) |
+| **Windows Telemetry** | Implement Sysmon and Windows Event Forwarding for rich endpoint visibility |
+| **Portfolio Building** | Document every lab exercise with commands, results, and detection evidence |
 
 ---
 
 ## Network Architecture
 
 ```
-                          ┌─────────────────────────────────┐
-                          │         Home Network             │
-                          │         192.168.1.0/24           │
-                          └──────────────┬──────────────────┘
-                                         │
-                                  ┌──────┴──────┐
-                                  │  Hypervisor │
-                                  │  (Proxmox)  │
-                                  └──────┬──────┘
-                                         │
-              ┌──────────────────────────┼──────────────────────────┐
-              │                          │                           │
-   ┌──────────┴──────────┐  ┌───────────┴───────────┐  ┌──────────┴──────────┐
-   │   pfSense Firewall  │  │   pfSense Firewall    │  │  Management VLAN    │
-   │   (WAN Interface)   │  │   (VLAN Routing)      │  │  10.0.0.0/24        │
-   └──────────┬──────────┘  └───────────┬───────────┘  └─────────────────────┘
-              │                          │
-   ┌──────────┴──────────┐               │
-   │                     │    ┌──────────┴──────────────────────────────┐
-   │   Attack Segment    │    │                                          │
-   │   VLAN 10           │    │         Internal Segments                │
-   │   10.10.10.0/24     │    │                                          │
-   │                     │    │  ┌─────────────┐   ┌─────────────────┐  │
-   │  ┌───────────────┐  │    │  │ Corp VLAN20 │   │ DMZ  VLAN 30    │  │
-   │  │  Kali Linux   │  │    │  │10.20.20.0/24│   │10.30.30.0/24    │  │
-   │  │  (Attacker)   │  │    │  │             │   │                 │  │
-   │  └───────────────┘  │    │  │ Win Server  │   │  Security Onion │  │
-   │                     │    │  │ (AD/DC)     │   │  (IDS/NSM)      │  │
-   └─────────────────────┘    │  │ Win 10 x2   │   │  Splunk SIEM    │  │
-                              │  │ Metasploit. │   │                 │  │
-                              │  │ Ubuntu Svr  │   └─────────────────┘  │
-                              │  └─────────────┘                        │
-                              └─────────────────────────────────────────┘
+Home LAN — 192.168.0.0/24
+Default Gateway: 192.168.0.1
+─────────────────────────────────────────────────────
+  ┌───────────────────────┐
+  │   Attack Mac (Intel)  │
+  │   Host OS: macOS      │
+  │   └── Kali Linux VM   │  ← Kerberoasting, CME,
+  │       (Attacker)      │     password spraying
+  └───────────┬───────────┘
+              │  192.168.0.0/24 (flat LAN)
+  ┌───────────┴───────────┐
+  │  DC01 — Windows Server│
+  │  Domain: corp.lab     │  ← AD DS, DNS, Sysmon,
+  │  Static IP            │     WEF (WEC receiver),
+  │                       │     Elastic Agent
+  └───────────┬───────────┘
+              │
+  ┌───────────┴───────────┐
+  │  WS01 — Windows Client│
+  │  Joined: corp.lab     │  ← Sysmon, WEF client,
+  │                       │     domain user logins,
+  │                       │     lateral movement target
+  └───────────────────────┘
+
+  ┌────────────────────────────────────────────────────┐
+  │  SOC Mac (Apple Silicon M1 Pro)                    │
+  │  └── Ubuntu Server VM (ARM64, CLI-only / headless) │
+  │      └── Elastic Stack (self-hosted)               │
+  │          ├── Elasticsearch                         │
+  │          ├── Kibana + Elastic Security             │
+  │          └── Fleet Server                          │
+  └────────────────────────────────────────────────────┘
 ```
 
 See [docs/architecture/network-topology.md](docs/architecture/network-topology.md) for full details.
+
+---
+
+## Lab Status
+
+### ✅ Completed
+
+| Component | Status | Notes |
+|-----------|--------|-------|
+| Active Directory domain (`corp.lab`) | ✅ Working | DNS, Kerberos, SMB all functional |
+| Time sync | ✅ Fixed | No Kerberos skew issues |
+| Sysmon on DC01 | ✅ Installed & logging | Capturing process creation, network, registry events |
+| Sysmon on WS01 | ✅ Installed & logging | Same configuration as DC01 |
+| Windows Event Forwarding (WEF) | ✅ Functional | WS01 → DC01; events visible in Forwarded Events log |
+| WEF manual test (`eventcreate`) | ✅ Confirmed | Test event forwarded successfully |
+| Elastic Stack on Ubuntu ARM64 | ✅ Running | Elasticsearch + Kibana + Fleet Server |
+| Fleet Server | ✅ Healthy in Kibana | Visible in Fleet management UI |
+| Windows agent policy | ✅ Created | Scoped to Windows endpoints |
+| Windows + Sysmon integrations | ✅ Added | Both integrations configured in policy |
+| Elastic Agent on DC01 | ✅ Installed | Agent enrolled and reporting |
+| Logs hitting Kibana | ✅ Real-time | Windows Event Logs + Sysmon events visible |
+
+### 🔜 Next Steps
+
+| Step | Goal |
+|------|------|
+| [Validate Kerberoasting visibility](docs/projects/11-kerberoasting-detection.md) | Simulate Kerberoast from Kali; confirm Event ID 4769 in Kibana |
+| [Build custom detection rules](docs/projects/12-custom-detection-rules.md) | Detect excessive 4625 failures and suspicious service ticket requests |
+| [Add WS01 & simulate lateral movement](docs/projects/13-lateral-movement-lab.md) | Lateral movement from DC01 to WS01; detect with Elastic Security |
+| [Tune Windows integration](docs/projects/14-powershell-logging-tuning.md) | Enable PowerShell logging (Script Block, Module, Transcription) |
 
 ---
 
@@ -87,35 +117,34 @@ See [docs/architecture/network-topology.md](docs/architecture/network-topology.m
 ### Infrastructure
 | Category | Tool | Purpose |
 |----------|------|---------|
-| Hypervisor | [Proxmox VE](https://www.proxmox.com/) | Virtualization platform hosting all VMs |
-| Firewall/Router | [pfSense](https://www.pfsense.org/) | Network segmentation, firewall rules, VPN |
-| Networking | VLANs (802.1Q) | Isolating lab segments |
+| Hypervisor | macOS Virtualization / UTM | Hosting VMs on Intel Mac and Apple Silicon Mac |
+| Domain Controller | Windows Server (DC01) | Active Directory domain `corp.lab`, DNS, WEF receiver |
+| Workstation | Windows Client (WS01) | Domain-joined target for lateral movement simulation |
 
 ### Attack Platform
 | Category | Tool | Purpose |
 |----------|------|---------|
-| Attacker OS | [Kali Linux](https://www.kali.org/) | Penetration testing and offensive toolset |
-| Framework | [Metasploit](https://www.metasploit.com/) | Exploitation framework |
-| Scanning | [Nmap](https://nmap.org/), [Nessus](https://www.tenable.com/products/nessus) | Network and vulnerability scanning |
-| Web App Testing | [Burp Suite](https://portswigger.net/burp) | Web application security testing |
-| Password Attacks | [Hashcat](https://hashcat.net/), [John the Ripper](https://www.openwall.com/john/) | Password cracking |
+| Attacker OS | [Kali Linux](https://www.kali.org/) | Penetration testing and offensive toolset (VM on Intel Mac) |
+| AD Attacks | [Impacket](https://github.com/fortra/impacket) | Kerberoasting (`GetUserSPNs.py`), AS-REP roasting |
+| AD Attacks | [CrackMapExec (CME)](https://github.com/byt3bl33d3r/CrackMapExec) | Password spraying, SMB enumeration |
+| Password Cracking | [Hashcat](https://hashcat.net/) | Offline cracking of Kerberos TGS tickets |
 
-### Vulnerable Targets
+### Telemetry & Log Collection
 | Category | Tool | Purpose |
 |----------|------|---------|
-| Windows AD | Windows Server 2019 + Windows 10 | Active Directory attack surface |
-| Linux Target | [Metasploitable 3](https://github.com/rapid7/metasploitable3) | Intentionally vulnerable Linux VM |
-| Web App | [DVWA](https://github.com/digininja/DVWA) | Deliberately vulnerable web application |
-| Web App | [VulnHub machines](https://www.vulnhub.com/) | Additional CTF-style targets |
+| Endpoint Telemetry | [Sysmon](https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon) | Rich process, network, and registry event logging on Windows |
+| Log Forwarding | Windows Event Forwarding (WEF) | Forward events from WS01 to DC01 collector |
+| SIEM Agent | [Elastic Agent](https://www.elastic.co/elastic-agent) | Ships Windows events + Sysmon logs to Elasticsearch |
 
 ### Defense & Monitoring
 | Category | Tool | Purpose |
 |----------|------|---------|
-| IDS/NSM | [Security Onion](https://securityonionsolutions.com/) | Network security monitoring, Suricata IDS |
-| SIEM | [Splunk](https://www.splunk.com/) | Log aggregation, correlation, alerting |
-| EDR/HIDS | [Wazuh](https://wazuh.com/) | Host-based intrusion detection |
+| SIEM | [Elastic Security](https://www.elastic.co/security) | Log aggregation, detection rules, alerting, investigations |
+| Log Storage | [Elasticsearch](https://www.elastic.co/elasticsearch) | Indexed log storage (self-hosted, free Basic licence) |
+| UI / Dashboards | [Kibana](https://www.elastic.co/kibana) | Visualisations, Discover, Security app |
+| Agent Management | [Fleet Server](https://www.elastic.co/guide/en/fleet/current/fleet-server.html) | Centralised Elastic Agent policy and enrollment |
+| Threat Intel | [MITRE ATT&CK](https://attack.mitre.org/) | Mapping adversary TTPs to detection rules |
 | Packet Capture | [Wireshark](https://www.wireshark.org/) | Network traffic analysis |
-| Threat Intel | [MITRE ATT&CK](https://attack.mitre.org/) | Mapping adversary TTPs |
 
 ---
 
@@ -123,7 +152,7 @@ See [docs/architecture/network-topology.md](docs/architecture/network-topology.m
 
 | Section | Description |
 |---------|-------------|
-| [Architecture](docs/architecture/) | Network topology, VLAN design, and firewall rules |
+| [Architecture](docs/architecture/) | Network topology and system design |
 | [Setup Guide](docs/setup/) | Step-by-step environment build instructions |
 | [Tools](docs/tools/) | Configuration and usage notes for each tool |
 | [Projects](docs/projects/) | Individual lab exercises and walkthroughs |
@@ -132,32 +161,46 @@ See [docs/architecture/network-topology.md](docs/architecture/network-topology.m
 
 ## Projects & Labs
 
+### SOC / Blue Team Series (Current Lab)
+
+| Project | Description | Status | Skills |
+|---------|-------------|--------|--------|
+| [09 — Elastic SIEM Setup](docs/projects/09-elastic-siem-setup.md) | Deploy Elastic Stack on Ubuntu ARM64; enroll Elastic Agent on DC01 | ✅ Complete | Elastic, Fleet, Ubuntu |
+| [10 — WEF & Sysmon Setup](docs/projects/10-wef-sysmon-setup.md) | Install Sysmon on DC01/WS01; configure WEF pipeline | ✅ Complete | Sysmon, WEF, WinRM, GPO |
+| [11 — Kerberoasting Detection](docs/projects/11-kerberoasting-detection.md) | Simulate Kerberoast from Kali; detect via Event ID 4769 in Kibana | 🔜 Next | Kerberos, Impacket, KQL |
+| [12 — Custom Detection Rules](docs/projects/12-custom-detection-rules.md) | Build Elastic detection rules for 4625 brute-force and SPN scanning | 🔜 Next | Elastic Security, EQL, KQL |
+| [13 — Lateral Movement Lab](docs/projects/13-lateral-movement-lab.md) | Simulate lateral movement to WS01; detect with Sysmon + Elastic | 🔜 Next | SMB, WMI, Pass-the-Hash |
+| [14 — PowerShell Logging Tuning](docs/projects/14-powershell-logging-tuning.md) | Enable Script Block, Module, and Transcription logging; tune Elastic integration | 🔜 Next | PowerShell, GPO, Elastic |
+
+### Foundation Series
+
 | Project | Description | Skills |
 |---------|-------------|--------|
-| [01 — Environment Setup](docs/projects/01-environment-setup.md) | Provisioning the hypervisor, VMs, and network segments | Virtualization, networking |
-| [02 — Active Directory Lab](docs/projects/02-active-directory-lab.md) | Deploy AD, simulate common AD attacks (Kerberoasting, Pass-the-Hash) | Windows, AD, offense/defense |
-| [03 — Network Scanning & Enumeration](docs/projects/03-network-scanning-enumeration.md) | Reconnaissance using Nmap, enum4linux, and Nessus | Recon, vulnerability scanning |
+| [01 — Environment Setup](docs/projects/01-environment-setup.md) | Provisioning VMs and network | Virtualization, networking |
+| [02 — Active Directory Lab](docs/projects/02-active-directory-lab.md) | Deploy AD, simulate common AD attacks | Windows, AD, offense/defense |
+| [03 — Network Scanning & Enumeration](docs/projects/03-network-scanning-enumeration.md) | Reconnaissance with Nmap, enum4linux, Nessus | Recon, vulnerability scanning |
 | [04 — Exploitation with Metasploit](docs/projects/04-exploitation-metasploit.md) | Exploiting vulnerabilities on Metasploitable 3 | Exploitation, post-exploitation |
-| [05 — Web Application Testing](docs/projects/05-web-app-testing.md) | Testing DVWA for OWASP Top 10 vulnerabilities | Web security, Burp Suite |
-| [06 — SIEM & Log Analysis](docs/projects/06-siem-log-analysis.md) | Aggregating logs in Splunk and building detection rules | SIEM, log analysis, alerting |
-| [07 — Intrusion Detection with Security Onion](docs/projects/07-intrusion-detection.md) | Tuning Suricata rules and analyzing IDS alerts | IDS/NSM, Suricata |
+| [05 — Web Application Testing](docs/projects/05-web-app-testing.md) | Testing DVWA for OWASP Top 10 | Web security, Burp Suite |
+| [06 — SIEM & Log Analysis](docs/projects/06-siem-log-analysis.md) | Log aggregation and detection rules | SIEM, log analysis, alerting |
+| [07 — Intrusion Detection with Security Onion](docs/projects/07-intrusion-detection.md) | Tuning Suricata rules and analysing IDS alerts | IDS/NSM, Suricata |
 | [08 — Incident Response Simulation](docs/projects/08-incident-response.md) | End-to-end IR exercise: detect, contain, eradicate, recover | Incident response, forensics |
 
 ---
 
 ## Skills Demonstrated
 
-- ✅ **Virtualization & Network Engineering** — Proxmox, pfSense, VLAN segmentation
+- ✅ **Active Directory Security** — Domain deployment, AD attack simulation (Kerberoasting, Pass-the-Hash, password spraying), and detection
+- ✅ **Elastic SIEM** — Self-hosted deployment, Fleet management, agent enrollment, Windows/Sysmon integrations, KQL/EQL queries, custom detection rules
+- ✅ **Windows Telemetry** — Sysmon configuration and tuning; Windows Event Forwarding (WEF) subscriber/collector setup
+- ✅ **SOC Operations** — Alert triage, detection rule creation, investigation workflows, event correlation
+- ✅ **Threat Intelligence** — MITRE ATT&CK TTP mapping (T1558 Kerberoasting, T1110 Brute Force, T1021 Lateral Movement)
 - ✅ **Penetration Testing** — Reconnaissance, scanning, exploitation, post-exploitation
-- ✅ **Active Directory Security** — AD deployment, enumeration, and attack techniques (Kerberoasting, Pass-the-Hash, BloodHound)
 - ✅ **Web Application Security** — OWASP Top 10, Burp Suite, manual testing
 - ✅ **Security Monitoring** — IDS rule tuning, NSM with Security Onion
-- ✅ **SIEM Operations** — Log ingestion, search queries (SPL), dashboards, and correlation rules in Splunk
 - ✅ **Incident Response** — PICERL methodology (Preparation, Identification, Containment, Eradication, Recovery, Lessons Learned)
-- ✅ **Threat Intelligence** — MITRE ATT&CK framework mapping
 - ✅ **Documentation** — Detailed write-ups for all lab activities
 
 ---
 
-> **Note:** This lab is entirely isolated and built for educational and portfolio purposes. All offensive techniques are performed only within the controlled lab environment against intentionally vulnerable machines.
+> **Note:** This lab is entirely self-contained and built for educational and portfolio purposes. All offensive techniques are performed only within the controlled lab environment against intentionally vulnerable machines owned by the lab operator.
 
