@@ -44,6 +44,8 @@ Rename-Computer -NewName "DC01" -Restart
 
 ### 3. Configured a Static IP
 
+![static ip setup](../assets/DC01%20setup/2%20ip%20configuration.png)
+
 After reboot, set a static IP so DNS remains stable when the system becomes a DC:
 
 ```powershell
@@ -64,6 +66,8 @@ Verified the static IP was applied:
 ipconfig /all
 ```
 
+![ip verification](../assets/DC01%20setup/3%20network%20verification.png)
+
 ### 4. Rebooted the Server
 
 ```powershell
@@ -72,6 +76,8 @@ Restart-Computer
 
 ### 5. Installed Active Directory Domain Services
 
+![installl active directory](../assets/DC01%20setup/4%20setting%20up%20roles.png)
+
 After logging back in as local Administrator:
 
 ```powershell
@@ -79,6 +85,8 @@ Install-WindowsFeature -Name AD-Domain-Services -IncludeManagementTools
 ```
 
 ### 6. Promoted the Server to Domain Controller
+
+![set up domain controller](../assets/DC01%20setup/5%20setting%20up%20domain%20controller.png)
 
 Created a new forest with the domain name `corp.lab`:
 
@@ -94,6 +102,8 @@ The server rebooted automatically. After reboot, logged in as `CORP\Administrato
 
 ### 7. Created Organisational Units
 
+![created OUs](../assets/DC01%20setup/7%20created%20OUs.png)
+
 ```powershell
 New-ADOrganizationalUnit -Name "Corp Users"     -Path "DC=corp,DC=lab"
 New-ADOrganizationalUnit -Name "Corp Admins"    -Path "DC=corp,DC=lab"
@@ -102,6 +112,10 @@ New-ADOrganizationalUnit -Name "Workstations"   -Path "DC=corp,DC=lab"
 ```
 
 ### 8. Created Domain Users
+
+![created domain users](../assets/DC01%20setup/8%20created%20standard%20users.png)
+
+![admin accounts](../assets/DC01%20setup/9%20created%20admin.png)
 
 ```powershell
 # Standard domain users
@@ -134,6 +148,8 @@ Add-ADGroupMember -Identity "Domain Admins" -Members "aadmin"
 ```
 
 ### 9. Created Service Accounts
+
+![service accounts](../assets/DC01%20setup/10%20created%20service%20accounts.png)
 
 ```powershell
 # SQL service account (used as a Kerberoasting target in later labs)
