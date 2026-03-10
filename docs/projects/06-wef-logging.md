@@ -40,6 +40,8 @@ DC01 — Windows Event Collector (WEC)
 
 ### 1. Configured DC01 as the Windows Event Collector
 
+![WEF](../assets/DC01%20setup/15%20configured%20windows%20event%20collector.png)
+
 On **DC01** (as Domain Admin):
 
 ```powershell
@@ -63,6 +65,8 @@ winrm enumerate winrm/config/listener
 ```
 
 ### 3. Created the WEF Subscription on DC01
+
+![created subscription](../assets/DC01%20setup/16%20created%20windows%20event%20forwarding%20subscription.png)
 
 A WEF subscription defines which events are collected and from which source machines. Created a **source-initiated subscription** (WS01 pushes to DC01).
 
@@ -172,6 +176,8 @@ Get-WinEvent -LogName "ForwardedEvents" |
 ```
 
 **Result:** Test event ID 999 from WS01 appeared in DC01's Forwarded Events log. ✅
+
+![logs flowing](../assets/DC01%20setup/19%20after%20much%20troubleshooting%20we%20now%20have%20logs.png)
 
 ---
 
