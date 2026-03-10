@@ -41,6 +41,10 @@ Sysmon supplements the default Windows Event Log with high-fidelity events that 
 
 On each Windows machine (DC01 and WS01), downloaded Sysmon and the widely-used SwiftOnSecurity Sysmon configuration:
 
+![config sysmon](../assets/DC01%20setup/11%20configuring%20sysmon.png)
+
+![ws sysmon config](../assets/WS01%20setup/3%20configuring%20sysmon.png)
+
 ```powershell
 # Download Sysmon from Microsoft Sysinternals
 Invoke-WebRequest `
@@ -57,6 +61,8 @@ Invoke-WebRequest `
 
 ### 2. Installed Sysmon on DC01
 
+![install sysmon](../assets/DC01%20setup/12%20installing%20sysmon.png)
+
 ```powershell
 # Run as Administrator on DC01
 cd C:\Tools\Sysmon
@@ -72,6 +78,8 @@ Sysmon64 started.
 
 ### 3. Verified Sysmon Was Running on DC01
 
+![verify running](../assets/DC01%20setup/13%20verify%20running.png)
+
 ```powershell
 # Check service status
 Get-Service Sysmon64
@@ -82,6 +90,10 @@ Get-WinEvent -LogName "Microsoft-Windows-Sysmon/Operational" -MaxEvents 10 |
 ```
 
 ### 4. Installed Sysmon on WS01
+
+![installed on ws01](../assets/WS01%20setup/3%20configuring%20sysmon.png)
+
+![install and verify](../assets/WS01%20setup/4%20install%20sysmon%20and%20verify%20running.png)
 
 Repeated the same steps on WS01 (logged in as a domain admin):
 
@@ -99,6 +111,10 @@ Get-WinEvent -LogName "Microsoft-Windows-Sysmon/Operational" -MaxEvents 10 |
 ```
 
 ### 5. Confirmed Key Events Were Captured
+
+![logging events](../assets/DC01%20setup/14%20verify%20events%20are%20being%20logged.png)
+
+![logging events](5%20verify%20events%20are%20logged.png)
 
 Triggered a process creation event on WS01 by opening a Command Prompt, then verified Sysmon captured it:
 
