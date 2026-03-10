@@ -1,66 +1,65 @@
-# Project 01 — Environment Setup
+# Project 01 — Attack Machine Setup
 
-**Skills:** Virtualization, Networking, VLAN Configuration, Firewall Policy
+**Skills:** Virtualization, VirtualBox, Kali Linux, Network Verification
 
 ---
 
 ## Objective
 
-Build the complete lab infrastructure from scratch: install the hypervisor, configure network segmentation, deploy pfSense, and verify that all VLANs are routed and isolated correctly before any security exercises begin.
+Set up the attack machine: install VirtualBox on the Intel Mac, deploy a Kali Linux VM, and confirm the VM can reach the rest of the lab network. This provides the offensive platform used in all subsequent attack-simulation exercises.
+
+---
+
+## Environment
+
+| Machine | Role | OS |
+|---------|------|----|
+| Attack Mac (Intel Core i7) | Attack host | macOS |
+| Kali Linux VM | Attacker | Kali Linux (latest) |
+
+**Network:** flat home LAN — `192.168.0.0/24`, gateway `192.168.0.1`
 
 ---
 
 ## Steps Completed
 
-### 1. Installed Proxmox VE 8.x
+### 1. Installed VirtualBox on the Attack Mac
 
-- Downloaded Proxmox VE 8.x ISO from the official site
-- Created a bootable USB using `dd`
-- Installed Proxmox on the lab host's NVMe SSD
-- Post-install: disabled enterprise repository, enabled free repository, updated all packages
+- Downloaded VirtualBox from [virtualbox.org](https://www.virtualbox.org/)
+- Ran the macOS installer package and completed the installation
+- Verified VirtualBox launched and the Extension Pack was installed for USB 3.0 / RDP support
 
-### 2. Configured VLAN-Aware Bridge
+### 2. Downloaded and Deployed the Kali Linux VM
 
-In the Proxmox web UI, created a Linux bridge `vmbr0` attached to the lab NIC with **VLAN-aware** mode enabled. This allows VMs to use specific VLAN tags without requiring separate physical interfaces per segment.
+- Downloaded the pre-built **Kali Linux VirtualBox image** (64-bit) from [kali.org/get-kali](https://www.kali.org/get-kali/#kali-virtual-machines)
+- Imported the `.ova` file into VirtualBox:
+  - **File → Import Appliance** → selected the Kali `.ova`
+  - Accepted default settings (2 CPU, 2 GB RAM) then adjusted to 2 CPU / 4 GB RAM for lab use
+- Set the network adapter to **Bridged Adapter** (attached to the Mac's active NIC) so the VM receives an IP on the home LAN
 
-### 3. Deployed pfSense VM
+### 3. Started the Kali VM and Verified Network
 
-- Created a VM with 2 vCPUs, 2 GB RAM, 20 GB disk
-- Attached 5 virtual NICs, one per VLAN (10, 20, 30, 99 + WAN)
-- Installed pfSense 2.7 and configured each interface:
+Booted the VM, logged in with default credentials (`kali` / `kali`), then confirmed the VM obtained a LAN IP:
 
-| Interface | VLAN | IP |
-|-----------|------|----|
-| WAN | — | DHCP from home router |
-| OPT1 (attack) | 10 | 10.10.10.1/24 |
-| OPT2 (corporate) | 20 | 10.20.20.1/24 |
-| OPT3 (dmz) | 30 | 10.30.30.1/24 |
-| OPT4 (mgmt) | 99 | 10.0.0.1/24 |
-
-### 4. Configured Firewall Rules
-
-Defined firewall rules in pfSense to:
-- Allow full traffic from VLAN 10 (attack) → VLAN 20 (corporate)
-- Allow log forwarding from VLAN 20 → VLAN 30 (monitoring)
-- Block VLAN 10 from reaching VLAN 30 and VLAN 99
-- Allow VLAN 99 to reach everything (management access)
-- Allow all VLANs outbound internet via NAT
-
-### 5. Deployed Initial VMs
-
-Deployed and configured network settings on:
-- **Kali Linux** (VLAN 10, 10.10.10.10)
-- **Windows Server 2019** (VLAN 20, 10.20.20.10)
-- **Ubuntu Server** placeholder VMs for monitoring (VLAN 30)
-
-### 6. Verified Connectivity
-
+```bash
+ip a
+# eth0 showed an IP in the 192.168.0.0/24 range
 ```
-Kali → Windows DC:        PASS  (ping 10.20.20.10)
-Kali → Security Onion:    FAIL  (blocked — expected)
-DC → Splunk port 9997:    PASS  (log forwarder test)
-Kali → Internet:          PASS  (curl ifconfig.me)
-Management → All VMs:     PASS  (SSH/WinRM reachable)
+
+### 4. Confirmed Reach to Windows Systems
+
+Before any Windows VMs existed, tested internet connectivity to confirm bridged networking was working:
+
+```bash
+ping -c 3 192.168.0.1        # gateway
+curl -s ifconfig.me           # public IP — confirms internet routing
+```
+
+Once the Windows VMs were up (later phases), connectivity was re-verified:
+
+```bash
+ping -c 3 192.168.0.10        # DC01
+ping -c 3 192.168.0.20        # WS01
 ```
 
 ---
@@ -69,20 +68,19 @@ Management → All VMs:     PASS  (SSH/WinRM reachable)
 
 | Challenge | Solution |
 |-----------|----------|
-| pfSense interfaces not appearing after boot | Fixed by reseating virtual NIC order in Proxmox — pfSense interface assignment is boot-order sensitive |
-| VLAN traffic not passing between VMs | Enabled VLAN-aware mode on `vmbr0` — initially missed this setting |
-| Windows Server couldn't resolve `lab.local` | Configured pfSense DNS resolver to forward `lab.local` to the Windows DC (`10.20.20.10`) |
+| VirtualBox network adapter showing as NAT after import | Changed adapter type to **Bridged Adapter** in VM settings → Network |
+| Kali VM only showing a 192.168.56.x IP (VirtualBox host-only network) | Detached the host-only adapter; set adapter 1 to Bridged Adapter on the Mac's Wi-Fi or Ethernet interface |
 
 ---
 
 ## Key Takeaways
 
-- VLAN-aware bridging in Proxmox is essential for multi-tenant network segmentation on a single physical NIC
-- pfSense interface assignment order matters and should be documented carefully
-- Establishing and verifying firewall rules before starting offensive exercises ensures the lab boundary is maintained
+- Using the pre-built Kali VirtualBox OVA saves significant setup time compared to a manual install
+- Bridged Adapter mode places the VM directly on the home LAN, making it reachable to all other lab systems without any NAT or port-forwarding configuration
+- Verifying network connectivity at each phase avoids troubleshooting surprises later
 
 ---
 
 ## Next Steps
 
-→ [Project 02 — Active Directory Lab](02-active-directory-lab.md)
+→ [Project 02 — Active Directory Domain Setup](02-active-directory-lab.md)

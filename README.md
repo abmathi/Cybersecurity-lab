@@ -117,7 +117,7 @@ See [docs/architecture/network-topology.md](docs/architecture/network-topology.m
 ### Infrastructure
 | Category | Tool | Purpose |
 |----------|------|---------|
-| Hypervisor | macOS Virtualization / UTM | Hosting VMs on Intel Mac and Apple Silicon Mac |
+| Hypervisor | [VirtualBox](https://www.virtualbox.org/) | Hosting VMs on both the Intel Mac (attack) and Apple Silicon Mac (SOC) |
 | Domain Controller | Windows Server (DC01) | Active Directory domain `corp.lab`, DNS, WEF receiver |
 | Workstation | Windows Client (WS01) | Domain-joined target for lateral movement simulation |
 
@@ -172,18 +172,18 @@ See [docs/architecture/network-topology.md](docs/architecture/network-topology.m
 | [13 — Lateral Movement Lab](docs/projects/13-lateral-movement-lab.md) | Simulate lateral movement to WS01; detect with Sysmon + Elastic | 🔜 Next | SMB, WMI, Pass-the-Hash |
 | [14 — PowerShell Logging Tuning](docs/projects/14-powershell-logging-tuning.md) | Enable Script Block, Module, and Transcription logging; tune Elastic integration | 🔜 Next | PowerShell, GPO, Elastic |
 
-### Foundation Series
+### Lab Build Series
 
-| Project | Description | Skills |
-|---------|-------------|--------|
-| [01 — Environment Setup](docs/projects/01-environment-setup.md) | Provisioning VMs and network | Virtualization, networking |
-| [02 — Active Directory Lab](docs/projects/02-active-directory-lab.md) | Deploy AD, simulate common AD attacks | Windows, AD, offense/defense |
-| [03 — Network Scanning & Enumeration](docs/projects/03-network-scanning-enumeration.md) | Reconnaissance with Nmap, enum4linux, Nessus | Recon, vulnerability scanning |
-| [04 — Exploitation with Metasploit](docs/projects/04-exploitation-metasploit.md) | Exploiting vulnerabilities on Metasploitable 3 | Exploitation, post-exploitation |
-| [05 — Web Application Testing](docs/projects/05-web-app-testing.md) | Testing DVWA for OWASP Top 10 | Web security, Burp Suite |
-| [06 — SIEM & Log Analysis](docs/projects/06-siem-log-analysis.md) | Log aggregation and detection rules | SIEM, log analysis, alerting |
-| [07 — Intrusion Detection with Security Onion](docs/projects/07-intrusion-detection.md) | Tuning Suricata rules and analysing IDS alerts | IDS/NSM, Suricata |
-| [08 — Incident Response Simulation](docs/projects/08-incident-response.md) | End-to-end IR exercise: detect, contain, eradicate, recover | Incident response, forensics |
+| Project | Description | Status | Skills |
+|---------|-------------|--------|--------|
+| [01 — Attack Machine Setup](docs/projects/01-environment-setup.md) | Install VirtualBox on Intel Mac; deploy Kali Linux VM; verify LAN connectivity | ✅ Complete | VirtualBox, Kali Linux, networking |
+| [02 — Active Directory Domain Setup](docs/projects/02-active-directory-lab.md) | Create DC01 Windows Server VM; promote to DC for `corp.lab`; create OUs and users | ✅ Complete | Windows Server, AD DS, DNS, PowerShell |
+| [03 — Active Directory Misconfigurations](docs/projects/03-ad-misconfigurations.md) | Introduce weak password policy, Kerberoastable SPNs, LLMNR, and disabled firewall | ✅ Complete | AD security, Kerberos, attack surface |
+| [04 — Workstation Deployment](docs/projects/04-workstation-deployment.md) | Create WS01 Windows Client VM; join to `corp.lab`; verify domain user logins | ✅ Complete | Windows, domain join, endpoint management |
+| [05 — Endpoint Telemetry with Sysmon](docs/projects/05-sysmon-setup.md) | Install and configure Sysmon on DC01 and WS01 for rich endpoint logging | ✅ Complete | Sysmon, event logging, XML config |
+| [06 — Centralized Logging with WEF](docs/projects/06-wef-logging.md) | Configure WEF to forward Security + Sysmon logs from WS01 → DC01 (WEC) | ✅ Complete | WEF, WEC, WinRM, GPO |
+| [07 — SOC Infrastructure Deployment](docs/projects/07-soc-infrastructure.md) | Install VirtualBox on SOC Mac (M1 Pro); deploy Ubuntu Server ARM64 VM | ✅ Complete | Ubuntu, VirtualBox, Linux, SSH |
+| [08 — Elastic Stack Installation](docs/projects/08-elastic-stack-setup.md) | Install and configure Elasticsearch + Kibana on Ubuntu Server | ✅ Complete | Elasticsearch, Kibana, SIEM deployment |
 
 ---
 
@@ -194,10 +194,7 @@ See [docs/architecture/network-topology.md](docs/architecture/network-topology.m
 - ✅ **Windows Telemetry** — Sysmon configuration and tuning; Windows Event Forwarding (WEF) subscriber/collector setup
 - ✅ **SOC Operations** — Alert triage, detection rule creation, investigation workflows, event correlation
 - ✅ **Threat Intelligence** — MITRE ATT&CK TTP mapping (T1558 Kerberoasting, T1110 Brute Force, T1021 Lateral Movement)
-- ✅ **Penetration Testing** — Reconnaissance, scanning, exploitation, post-exploitation
-- ✅ **Web Application Security** — OWASP Top 10, Burp Suite, manual testing
-- ✅ **Security Monitoring** — IDS rule tuning, NSM with Security Onion
-- ✅ **Incident Response** — PICERL methodology (Preparation, Identification, Containment, Eradication, Recovery, Lessons Learned)
+- ✅ **Infrastructure Deployment** — VirtualBox VM provisioning on Intel and Apple Silicon Macs; Ubuntu Server and Windows Server configuration
 - ✅ **Documentation** — Detailed write-ups for all lab activities
 
 ---

