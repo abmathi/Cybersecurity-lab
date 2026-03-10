@@ -6,6 +6,9 @@ This section provides an overview of each major tool used in the home lab, with 
 
 ## Table of Contents
 
+### Infrastructure
+- [VirtualBox](#virtualbox)
+
 ### SOC / Blue Team Tools
 - [Elastic Stack (Elasticsearch + Kibana)](#elastic-stack-elasticsearch--kibana)
 - [Elastic Agent & Fleet Server](#elastic-agent--fleet-server)
@@ -17,15 +20,35 @@ This section provides an overview of each major tool used in the home lab, with 
 - [Impacket](#impacket)
 - [CrackMapExec (CME)](#crackmapexec-cme)
 - [Hashcat](#hashcat)
-- [BloodHound](#bloodhound)
-- [Metasploit Framework](#metasploit-framework)
 - [Nmap](#nmap)
-- [Burp Suite Community Edition](#burp-suite-community-edition)
-
-### Analysis & Monitoring Tools
 - [Wireshark](#wireshark)
-- [Nessus Essentials](#nessus-essentials)
-- [Security Onion](#security-onion)
+
+---
+
+## VirtualBox
+
+| | |
+|-|---|
+| **Type** | Hypervisor / Virtualisation |
+| **Version** | 7.x |
+| **Official Docs** | https://www.virtualbox.org/wiki/Documentation |
+
+VirtualBox is the hypervisor used on both lab Macs to host all VMs. Version 7.x added native support for Apple Silicon (ARM64) guests, making it usable on both the Intel Mac (attack machine) and the Apple Silicon M1 Pro Mac (SOC machine).
+
+**VMs hosted in VirtualBox:**
+
+| Host Machine | VM | Guest OS |
+|-------------|-----|----------|
+| Attack Mac (Intel) | Kali Linux | Kali Linux (x86_64) |
+| SOC Mac (M1 Pro) | ubuntu-siem | Ubuntu Server 22.04 (ARM64) |
+
+**Key VirtualBox settings used:**
+- **Bridged Adapter** — places VMs directly on the home LAN (192.168.0.0/24) so they can communicate with each other and with physical machines without NAT
+- **Dynamically allocated disk** — only uses actual disk space, not the full allocated size
+
+**Used in:**
+- [Project 01 — Attack Machine Setup](../projects/01-environment-setup.md)
+- [Project 07 — SOC Infrastructure Deployment](../projects/07-soc-infrastructure.md)
 
 ---
 
@@ -48,10 +71,18 @@ Elastic Stack is a self-hosted, enterprise-grade SIEM platform used as the prima
 - **Fleet** — centralised agent policy management
 
 **Architecture in this lab:**
-- Single-node Elasticsearch on Ubuntu Server (ARM64)
+- Single-node Elasticsearch on Ubuntu Server (ARM64, IP: 192.168.0.50)
 - Kibana + Fleet Server co-hosted on same Ubuntu VM
 - Elastic Agent deployed on DC01 (Windows)
-- Security app: `http://<siem-ip>:5601/app/security`
+- Security app: `http://192.168.0.50:5601/app/security`
+
+**Configuration (`elasticsearch.yml`):**
+```yaml
+cluster.name: soc-lab
+node.name: soc-node-1
+network.host: 0.0.0.0
+discovery.type: single-node
+```
 
 **Key KQL queries:**
 ```kql
@@ -72,6 +103,7 @@ event.code: "4104" and winlog.channel: "Microsoft-Windows-PowerShell/Operational
 ```
 
 **Used in:**
+- [Project 08 — Elastic Stack Installation](../projects/08-elastic-stack-setup.md)
 - [Project 09 — Elastic SIEM Setup](../projects/09-elastic-siem-setup.md)
 - [Project 11 — Kerberoasting Detection](../projects/11-kerberoasting-detection.md)
 - [Project 12 — Custom Detection Rules](../projects/12-custom-detection-rules.md)
@@ -107,6 +139,8 @@ Get-Service "Elastic Agent"
 # In Kibana: Management → Fleet → Agents → verify "Healthy"
 ```
 
+**Used in:** [Project 09 — Elastic SIEM Setup](../projects/09-elastic-siem-setup.md)
+
 ---
 
 ## Sysmon
@@ -138,6 +172,7 @@ Sysmon (System Monitor) is a Windows service and device driver that monitors and
 **Recommended config:** [SwiftOnSecurity sysmon-config](https://github.com/SwiftOnSecurity/sysmon-config) (balanced coverage vs noise)
 
 **Used in:**
+- [Project 05 — Endpoint Telemetry with Sysmon](../projects/05-sysmon-setup.md)
 - [Project 10 — WEF & Sysmon Setup](../projects/10-wef-sysmon-setup.md)
 - [Project 11 — Kerberoasting Detection](../projects/11-kerberoasting-detection.md)
 - [Project 13 — Lateral Movement Lab](../projects/13-lateral-movement-lab.md)
@@ -182,7 +217,9 @@ eventcreate /T INFORMATION /ID 100 /L APPLICATION /D "WEF Test"
 # Verify it appears in DC01 Event Viewer → Forwarded Events
 ```
 
-**Used in:** [Project 10 — WEF & Sysmon Setup](../projects/10-wef-sysmon-setup.md)
+**Used in:**
+- [Project 06 — Centralized Logging with WEF](../projects/06-wef-logging.md)
+- [Project 10 — WEF & Sysmon Setup](../projects/10-wef-sysmon-setup.md)
 
 ---
 
@@ -202,7 +239,12 @@ Kali Linux is the industry-standard penetration testing distribution, pre-loaded
 - `hashcat` — offline TGS ticket cracking
 - `bloodhound-python` — AD attack path analysis
 - `nmap` — network discovery and port scanning
-- `burpsuite` — web application testing
+- `responder` — NTLMv2 hash capture
+
+**Used in:**
+- [Project 01 — Attack Machine Setup](../projects/01-environment-setup.md)
+- [Project 11 — Kerberoasting Detection](../projects/11-kerberoasting-detection.md)
+- [Project 13 — Lateral Movement Lab](../projects/13-lateral-movement-lab.md)
 
 ---
 
@@ -289,47 +331,7 @@ hashcat -m 19700 -a 0 kerberoast_hashes.txt /usr/share/wordlists/rockyou.txt
 hashcat -m 1000 -a 0 -r /usr/share/hashcat/rules/best64.rule hashes.txt wordlist.txt
 ```
 
-**Used in:** [Project 02 — Active Directory Lab](../projects/02-active-directory-lab.md), [Project 11 — Kerberoasting Detection](../projects/11-kerberoasting-detection.md)
-
----
-
-## BloodHound
-
-| | |
-|-|---|
-| **Type** | Active Directory Attack Path Analysis |
-| **Version** | 4.x (CE) |
-| **Official Docs** | https://bloodhound.readthedocs.io/ |
-
-BloodHound uses graph theory to reveal hidden relationships in Active Directory environments and identify attack paths to Domain Admin.
-
-**Workflow:**
-1. Run SharpHound collector on a domain-joined machine to gather AD data
-2. Import JSON data into BloodHound
-3. Query for shortest paths to Domain Admin
-4. Use results to prioritise hardening efforts
-
-**Used in:** [Project 02 — Active Directory Lab](../projects/02-active-directory-lab.md)
-
----
-
-## Metasploit Framework
-
-| | |
-|-|---|
-| **Type** | Exploitation Framework |
-| **Version** | 6.x |
-| **Official Docs** | https://docs.metasploit.com/ |
-
-Metasploit is the world's most widely used penetration testing framework. It provides:
-- **Exploit modules** for hundreds of known CVEs
-- **Auxiliary modules** for scanning and enumeration
-- **Post-exploitation modules** for privilege escalation and persistence
-- **Meterpreter** — advanced in-memory payload for post-exploitation
-
-**Used in:**
-- [Project 04 — Exploitation with Metasploit](../projects/04-exploitation-metasploit.md)
-- [Project 08 — Incident Response Simulation](../projects/08-incident-response.md)
+**Used in:** [Project 11 — Kerberoasting Detection](../projects/11-kerberoasting-detection.md)
 
 ---
 
@@ -341,7 +343,7 @@ Metasploit is the world's most widely used penetration testing framework. It pro
 | **Version** | 7.x |
 | **Official Docs** | https://nmap.org/docs.html |
 
-Nmap is the most widely used open-source network scanner.
+Nmap is the most widely used open-source network scanner. It is included in Kali Linux and used for host discovery and service enumeration across the lab network.
 
 **Common scans used:**
 ```bash
@@ -354,31 +356,11 @@ nmap -sV -sC -p- 192.168.0.10
 # OS detection
 nmap -O 192.168.0.10
 
-# Export to grepable format
-nmap -oG scan_results.gnmap 192.168.0.0/24
+# Scan specific AD service ports on DC01
+nmap -sV -p 88,135,139,389,445,464,636 192.168.0.10
 ```
 
-**Used in:** [Project 03 — Network Scanning & Enumeration](../projects/03-network-scanning-enumeration.md)
-
----
-
-## Burp Suite Community Edition
-
-| | |
-|-|---|
-| **Type** | Web Application Security Testing |
-| **Version** | 2024.x |
-| **Official Docs** | https://portswigger.net/burp/documentation |
-
-Burp Suite is the industry-standard tool for web application penetration testing.
-
-**Key features used:**
-- **Intercept Proxy** — intercept and modify HTTP/HTTPS requests
-- **Repeater** — manually craft and replay requests
-- **Intruder** — automated fuzzing and brute-force
-- **Decoder** — encode/decode data (Base64, URL encoding, etc.)
-
-**Used in:** [Project 05 — Web Application Testing](../projects/05-web-app-testing.md)
+**Used in:** [Project 11 — Kerberoasting Detection](../projects/11-kerberoasting-detection.md)
 
 ---
 
@@ -390,65 +372,24 @@ Burp Suite is the industry-standard tool for web application penetration testing
 | **Version** | 4.x |
 | **Official Docs** | https://www.wireshark.org/docs/ |
 
-Wireshark is the world's most popular network protocol analyser.
+Wireshark is the world's most popular network protocol analyser. It is used in the lab to inspect attack traffic and verify that expected network events are occurring during simulations.
 
-**Common uses in the lab:**
-- Capturing and analysing exploit traffic
-- Examining clear-text credentials in unencrypted protocols
-- Analysing malware C2 traffic patterns
-- Verifying firewall rule effectiveness
+**Common uses:**
+- Inspecting Kerberos traffic during Kerberoasting exercises
+- Verifying NTLMv2 hash capture during Responder simulations
+- Analysing lateral movement (SMB, WMI, RDP) traffic
 
 **Common filters:**
 ```
 # Filter by IP
 ip.addr == 192.168.0.10
 
-# Show only HTTP traffic
-http
-
-# Filter for DNS queries (not responses)
-dns and dns.flags.response == 0
-
 # Kerberos traffic
 kerberos
+
+# SMB traffic
+smb or smb2
+
+# Show only DNS queries
+dns and dns.flags.response == 0
 ```
-
----
-
-## Nessus Essentials
-
-| | |
-|-|---|
-| **Type** | Vulnerability Scanner |
-| **Version** | 10.x (Essentials — free for home lab) |
-| **Official Docs** | https://docs.tenable.com/nessus/ |
-
-Nessus Essentials is the free version of Tenable's industry-leading vulnerability scanner, limited to 16 IP addresses — sufficient for this lab.
-
-**Key capabilities:**
-- Authenticated and unauthenticated vulnerability scanning
-- CVE identification and CVSS scoring
-- Compliance checks (CIS benchmarks)
-- Plugin-based scan policies
-
-**Used in:** [Project 03 — Network Scanning & Enumeration](../projects/03-network-scanning-enumeration.md)
-
----
-
-## Security Onion
-
-| | |
-|-|---|
-| **Type** | Network Security Monitoring (NSM) / IDS Platform |
-| **Version** | 2.4.x |
-| **Official Docs** | https://docs.securityonion.net/ |
-
-Security Onion is a free, open-source NSM platform that bundles Suricata (IDS), Zeek (network analysis), and a full analysis stack.
-
-**Components leveraged:**
-- **Suricata** — signature-based IDS generating alerts for known attack patterns
-- **Zeek** — deep network traffic logging (DNS, HTTP, SSL, conn logs)
-- **Security Onion Console (SOC)** — alert triage and investigation UI
-
-**Used in:** [Project 07 — Intrusion Detection with Security Onion](../projects/07-intrusion-detection.md)
-
