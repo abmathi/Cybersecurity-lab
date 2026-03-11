@@ -1,4 +1,4 @@
-# Project 13 — Lateral Movement Lab
+# Project 12 — Lateral Movement Lab
 
 **Status:** 🔜 Next Step  
 **Skills:** Lateral Movement, Pass-the-Hash, PsExec, WMI, SMB, Impacket, CrackMapExec, Sysmon, Elastic Security, MITRE ATT&CK T1021
