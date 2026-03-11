@@ -1,4 +1,4 @@
-# Project 14 — PowerShell Logging Tuning
+# Project 13 — PowerShell Logging Tuning
 
 **Status:** 🔜 Next Step  
 **Skills:** PowerShell, Script Block Logging, Module Logging, Transcription Logging, Group Policy, Elastic Security, KQL, MITRE ATT&CK T1059.001
