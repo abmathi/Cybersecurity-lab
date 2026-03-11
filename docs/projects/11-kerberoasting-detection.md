@@ -73,6 +73,8 @@ nslookup corp.lab 192.168.0.10
 
 ### 1.2 Enumerate SPNs (Reconnaissance Phase)
 
+![enumerating](../assets/elastic/kerberoating%20command%20on%20kaali.png)
+
 Before requesting tickets, enumerate which accounts have SPNs registered:
 
 ```bash
