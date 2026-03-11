@@ -1,4 +1,4 @@
-# Project 12 — Custom Detection Rules
+# Project 11 — Custom Detection Rules
 
 **Status:** 🔜 Next Step  
 **Skills:** Elastic Security, Detection Rules, KQL, EQL, Threshold Rules, MITRE ATT&CK, Alert Management
