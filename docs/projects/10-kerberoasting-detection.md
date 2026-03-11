@@ -1,4 +1,4 @@
-# Project 11 — Kerberoasting Detection
+# Project 10 — Kerberoasting Detection
 
 **Status:** 🔜 Next Step  
 **Skills:** Kerberos, Active Directory, Impacket, Hashcat, Elastic Security, KQL, Event ID 4769, MITRE ATT&CK T1558.003
