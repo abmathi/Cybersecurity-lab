@@ -45,7 +45,7 @@ This project simulates lateral movement from DC01 to WS01 using credentials obta
 ## Pre-Requisites
 
 - Complete [Project 11 — Kerberoasting Detection](11-kerberoasting-detection.md) to obtain a cracked credential
-- WS01 is domain-joined and WEF is configured (see [Project 10](10-wef-sysmon-setup.md))
+- WS01 is domain-joined and WEF is configured (see [Project 05 — Sysmon Setup](05-sysmon-setup.md) and [Project 06 — WEF Logging](06-wef-logging.md))
 - Elastic Agent on DC01 is healthy; WS01 events are appearing in Kibana via WEF
 - Alternatively, obtain the local Administrator hash from DC01 via `impacket-secretsdump`:
 

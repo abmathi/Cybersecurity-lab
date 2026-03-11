@@ -508,7 +508,6 @@ crackmapexec smb 192.168.0.10 -u jsmith -p 'Password123!' -d corp.lab
 With the lab running, proceed to the [Projects](../projects/) to start performing and documenting security exercises:
 
 1. [09 — Elastic SIEM Setup](../projects/09-elastic-siem-setup.md)
-2. [10 — WEF & Sysmon Setup](../projects/10-wef-sysmon-setup.md)
-3. [11 — Kerberoasting Detection](../projects/11-kerberoasting-detection.md)
-4. [12 — Custom Detection Rules](../projects/12-custom-detection-rules.md)
+2. [11 — Kerberoasting Detection](../projects/11-kerberoasting-detection.md)
+3. [12 — Custom Detection Rules](../projects/12-custom-detection-rules.md)
 

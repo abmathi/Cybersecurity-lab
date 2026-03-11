@@ -166,7 +166,6 @@ See [docs/architecture/network-topology.md](docs/architecture/network-topology.m
 | Project | Description | Status | Skills |
 |---------|-------------|--------|--------|
 | [09 — Elastic SIEM Setup](docs/projects/09-elastic-siem-setup.md) | Deploy Elastic Stack on Ubuntu ARM64; enroll Elastic Agent on DC01 | ✅ Complete | Elastic, Fleet, Ubuntu |
-| [10 — WEF & Sysmon Setup](docs/projects/10-wef-sysmon-setup.md) | Install Sysmon on DC01/WS01; configure WEF pipeline | ✅ Complete | Sysmon, WEF, WinRM, GPO |
 | [11 — Kerberoasting Detection](docs/projects/11-kerberoasting-detection.md) | Simulate Kerberoast from Kali; detect via Event ID 4769 in Kibana | 🔜 Next | Kerberos, Impacket, KQL |
 | [12 — Custom Detection Rules](docs/projects/12-custom-detection-rules.md) | Build Elastic detection rules for 4625 brute-force and SPN scanning | 🔜 Next | Elastic Security, EQL, KQL |
 | [13 — Lateral Movement Lab](docs/projects/13-lateral-movement-lab.md) | Simulate lateral movement to WS01; detect with Sysmon + Elastic | 🔜 Next | SMB, WMI, Pass-the-Hash |
