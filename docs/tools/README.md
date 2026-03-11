@@ -173,7 +173,6 @@ Sysmon (System Monitor) is a Windows service and device driver that monitors and
 
 **Used in:**
 - [Project 05 — Endpoint Telemetry with Sysmon](../projects/05-sysmon-setup.md)
-- [Project 10 — WEF & Sysmon Setup](../projects/10-wef-sysmon-setup.md)
 - [Project 11 — Kerberoasting Detection](../projects/11-kerberoasting-detection.md)
 - [Project 13 — Lateral Movement Lab](../projects/13-lateral-movement-lab.md)
 
@@ -219,7 +218,6 @@ eventcreate /T INFORMATION /ID 100 /L APPLICATION /D "WEF Test"
 
 **Used in:**
 - [Project 06 — Centralized Logging with WEF](../projects/06-wef-logging.md)
-- [Project 10 — WEF & Sysmon Setup](../projects/10-wef-sysmon-setup.md)
 
 ---
 
