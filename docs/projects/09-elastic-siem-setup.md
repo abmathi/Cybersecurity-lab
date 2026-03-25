@@ -210,7 +210,7 @@ Configure:
 
 This captures all Sysmon events (process creation, network connections, etc.).
 
-![Create Policies](../assets/WS0101%20setup/7-ws01-policy.png)
+![Create Policies](../assets/WS01%20setup/7-ws01-policy.png)
 
 ---
 
@@ -224,7 +224,7 @@ Select the **Windows Endpoints** policy and copy the enrollment token.
 
 ### 5.2 Install Elastic Agent on DC01 & WS01 (PowerShell as Administrator)
 
-![Install Agents](../assets/WS0101%20setup/8-install-elastic-agent-on-ws01.png)
+![Install Agents](../assets/WS01%20setup/8-install-elastic-agent-on-ws01.png)
 
 ```powershell
 # Download Elastic Agent for Windows
@@ -259,6 +259,8 @@ In Kibana: **Fleet → Agents** — DC01 should appear with status **Healthy**.
 
 ### 6.1 Check Logs in Discover
 
+![Check Logs](../assets/elastic/logs%20flowing.png)
+
 In Kibana: **Discover**
 
 - Set index pattern to `logs-*` or `logs-windows.*`
@@ -282,6 +284,8 @@ message: "Elastic SIEM Pipeline Test"
 The event should appear within 30 seconds.
 
 ### 6.3 Verify Sysmon Events
+
+![Verify Events](../assets/WS01%20setup/10-ws01-sysmon-logs.png)
 
 In Kibana Discover, filter:
 
