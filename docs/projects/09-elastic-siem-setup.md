@@ -210,6 +210,8 @@ Configure:
 
 This captures all Sysmon events (process creation, network connections, etc.).
 
+![Create Policies](../assets/WS0101%20setup/7-ws01-policy.png)
+
 ---
 
 ## Part 5: Enrol Elastic Agent on DC01
@@ -220,7 +222,9 @@ In Kibana: **Management → Fleet → Enrollment tokens**
 
 Select the **Windows Endpoints** policy and copy the enrollment token.
 
-### 5.2 Install Elastic Agent on DC01 (PowerShell as Administrator)
+### 5.2 Install Elastic Agent on DC01 & WS01 (PowerShell as Administrator)
+
+![Install Agents](../assets/WS0101%20setup/8-install-elastic-agent-on-ws01.png)
 
 ```powershell
 # Download Elastic Agent for Windows
@@ -239,6 +243,8 @@ cd "C:\Tools\elastic-agent-8.x.x-windows-x86_64"
 ```
 
 ### 5.3 Verify Agent is Enrolled
+
+![Verify Enrollment](../assets/WS0101%20setup/9-ws01-enrolled.png)
 
 ```powershell
 # Check Windows service
