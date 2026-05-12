@@ -170,6 +170,8 @@ Look for these fields in the 4769 events:
 
 ### 2.4 Build a Discover Filter for Kerberoasting
 
+![enumerating](../assets/elastic/kerberoasting%20rule%20created.png)
+
 ```kql
 event.code: "4769"
   and winlog.event_data.TicketEncryptionType: "0x17"
