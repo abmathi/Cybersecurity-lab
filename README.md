@@ -1,156 +1,97 @@
-# Cybersecurity Home Lab | SOC / Blue Team Detection Lab
+# Elastic SIEM SOC Home Lab
 
-This project is a self-hosted cybersecurity home lab built to simulate real-world Security Operations Center (SOC) workflows in an enterprise-style environment.
+This repository documents a self-hosted SOC / Blue Team home lab built to practice endpoint telemetry, centralized log collection, detection engineering, and alert investigation in an Active Directory environment.
 
-The lab focuses on **threat detection, log analysis, alert triage, and attack investigation** using Elastic SIEM, Sysmon, Windows Event Forwarding (WEF), and Active Directory.
+The lab uses Elastic Stack, Fleet Server, Elastic Agent, Windows Event Forwarding, Sysmon, and Kali Linux attack simulation to generate and investigate realistic security events.
 
-It is designed as a portfolio project to demonstrate hands-on experience with **security monitoring, detection engineering, and incident investigation**.
+## Project Goals
 
----
+- Build a small enterprise-style Active Directory lab.
+- Collect Windows Security and Sysmon telemetry from domain systems.
+- Deploy Elastic Stack as the SIEM platform.
+- Enroll Windows endpoints with Elastic Agent and Fleet.
+- Create and validate custom detection rules.
+- Simulate attack activity from Kali Linux.
+- Investigate generated alerts using Kibana and Elastic Security.
 
-## 🔥 Key Highlights
+## Lab Architecture
 
-- Built a simulated **Active Directory enterprise environment (corp.lab)**
-- Deployed a **self-hosted Elastic Stack SIEM (Elasticsearch, Kibana, Fleet)**
-- Configured **Windows Event Forwarding (WEF)** for centralized logging
-- Integrated **Sysmon** for enhanced endpoint telemetry
-- Enrolled endpoints using **Elastic Agent + Fleet Server**
-- Created and tuned **custom detection rules (e.g., Event ID 4625)**
-- Simulated real-world attacks (Kerberoasting, password spraying, lateral movement)
-- Investigated logs and alerts using **Kibana + KQL queries**
+| System | Role | Notes |
+|---|---|---|
+| Kali Linux | Attack machine | Used for Kerberoasting and lateral movement simulation |
+| DC01 | Domain Controller | Active Directory, DNS, Sysmon, WEF collector |
+| WS01 | Domain workstation | Domain-joined Windows endpoint with Sysmon and Elastic Agent |
+| Ubuntu SIEM Server | Elastic Stack host | Elasticsearch, Kibana, Fleet Server |
 
----
+Domain: `corp.lab`  
+Network: `192.168.0.0/24`
 
-## 🏗️ Lab Architecture
+## Completed Work
 
-This lab simulates a small enterprise network:
+- Created a Windows Active Directory domain named `corp.lab`.
+- Configured a domain controller, DNS, organizational units, users, admin accounts, and service accounts.
+- Added intentional lab misconfigurations to support attack simulation.
+- Installed Sysmon on Windows systems for enhanced endpoint telemetry.
+- Configured Windows Event Forwarding for centralized event collection.
+- Installed and configured Elastic Stack on Ubuntu.
+- Configured Fleet Server and enrolled Windows endpoints with Elastic Agent.
+- Confirmed logs flowing into Elastic/Kibana.
+- Installed Elastic prebuilt detection rules.
+- Created custom detection rules for failed logons and Kerberoasting activity.
+- Simulated Kerberoasting and lateral movement attempts from Kali Linux.
+- Validated generated alerts and reviewed investigation details in Elastic Security.
 
-- **Attack Machine:** Kali Linux (on Intel Mac)
-- **Domain Controller (DC01):** Windows Server (AD DS, DNS, Sysmon, WEF Collector)
-- **Workstation (WS01):** Domain-joined Windows endpoint
-- **SIEM Server:** Ubuntu Server (Elastic Stack + Fleet)
+## Skills Demonstrated
 
-**Domain:** `corp.lab`  
-**Network:** `192.168.0.0/24`
+- SIEM deployment and administration
+- Windows endpoint logging
+- Sysmon configuration and validation
+- Windows Event Forwarding
+- Active Directory administration
+- Detection engineering
+- KQL-based log analysis
+- Alert triage and investigation
+- MITRE ATT&CK mapping
+- Offensive security simulation in a controlled lab
+- Technical documentation
 
-See full architecture → `docs/architecture/network-topology.md`
+## Documentation
 
----
+| Phase | Document |
+|---|---|
+| 01 | [Environment Setup](docs/projects/01-environment-setup.md) |
+| 02 | [Active Directory Domain Setup](docs/projects/02-active-directory-lab.md) |
+| 03 | [AD Misconfigurations](docs/projects/03-ad-misconfigurations.md) |
+| 04 | [Workstation Deployment](docs/projects/04-workstation-deployment.md) |
+| 05 | [Sysmon Setup](docs/projects/05-sysmon-setup.md) |
+| 06 | [Windows Event Forwarding](docs/projects/06-wef-logging.md) |
+| 07 | [SOC Infrastructure](docs/projects/07-soc-infrastructure.md) |
+| 08 | [Elastic Stack Setup](docs/projects/08-elastic-stack-setup.md) |
+| 09 | [Elastic SIEM Setup](docs/projects/09-elastic-siem-setup.md) |
+| 10 | [Kerberoasting Detection](docs/projects/10-kerberoasting-detection.md) |
+| 11 | [Custom Detection Rules](docs/projects/11-custom-detection-rules.md) |
+| 12 | [Lateral Movement Lab](docs/projects/12-lateral-movement-lab.md) |
+| 13 | [PowerShell Logging Tuning - Planned Enhancement](docs/projects/13-powershell-logging-tuning.md) |
 
-## ✅ Implemented Components
+## Detection Work Completed
 
-| Component | Status | Notes |
-|----------|--------|------|
-| Active Directory Domain | ✅ Complete | corp.lab fully functional |
-| Sysmon Telemetry | ✅ Complete | Installed on DC01 & WS01 |
-| Windows Event Forwarding | ✅ Complete | Centralized log collection |
-| Elastic Stack Deployment | ✅ Complete | Elasticsearch + Kibana |
-| Fleet Server | ✅ Complete | Agent management |
-| Elastic Agent | ✅ Complete | Enrolled endpoints |
-| Log Ingestion | ✅ Complete | Real-time logs in Kibana |
-| Detection Rules | ✅ Complete | Custom + prebuilt rules |
-| Attack Simulation | 🔄 Ongoing | Expanding detection coverage |
+| Detection | Data Source | Status |
+|---|---|---|
+| Excessive failed logons | Windows Security Event ID 4625 | Validated |
+| Kerberoasting activity | Windows Security Event ID 4769 | Validated |
+| Remote service creation | Windows Event ID 7045 / Sysmon | Observed |
+| Suspicious process creation | Sysmon Event ID 1 | Observed |
+| Lateral movement attempts | Windows Security + Sysmon | Initial validation complete |
 
----
+## Future Enhancements
 
-## 🛠️ Technologies & Tools
+- Enable and validate PowerShell Script Block Logging.
+- Add PowerShell-specific detection rules.
+- Add a visual architecture diagram.
+- Export custom Elastic detection rules to the repository.
+- Add incident-style writeups for each simulated attack.
+- Expand lateral movement testing and detection coverage.
 
-### Infrastructure
-- VirtualBox
-- Windows Server (Active Directory)
-- Windows Client
-- Ubuntu Server
+## Disclaimer
 
-### SIEM & Monitoring
-- Elasticsearch
-- Kibana
-- Elastic Security
-- Fleet Server
-- Elastic Agent
-
-### Telemetry & Logging
-- Sysmon
-- Windows Event Forwarding (WEF)
-
-### Adversary Simulation
-- Kali Linux
-- Impacket
-- CrackMapExec
-- Hashcat
-
-### Analysis & Investigation
-- KQL (Kibana Query Language)
-- Wireshark
-- MITRE ATT&CK Framework
-
----
-
-## 🧠 Detection & Investigation Focus
-
-This lab was built to simulate real SOC analyst workflows:
-
-- Monitoring Windows Security and Sysmon logs in Elastic SIEM
-- Investigating authentication anomalies (e.g., failed logon spikes — Event ID 4625)
-- Detecting Kerberos abuse (Kerberoasting activity — Event ID 4769)
-- Correlating logs across multiple systems to identify attack patterns
-- Writing and tuning detection rules to reduce false positives
-- Validating detections through controlled adversary simulation
-
----
-
-## 🎯 Detection Scenarios
-
-- Brute-force detection (Event ID 4625)
-- Kerberoasting detection (Event ID 4769)
-- Lateral movement detection (SMB / WMI)
-- PowerShell logging and detection tuning
-- Alert triage and investigation workflows
-
-Detailed lab walkthroughs are located in the `docs/` directory.
-
----
-
-## 💪 Skills Demonstrated
-
-- Active Directory security and attack detection
-- SIEM deployment and log analysis (Elastic Stack)
-- Sysmon and Windows Event Forwarding configuration
-- Endpoint telemetry collection and event correlation
-- Detection engineering and alert tuning
-- Threat detection (brute force, Kerberos abuse, lateral movement)
-- Incident investigation using Kibana and KQL
-- Security documentation and reporting
-
----
-
-
-## 📁 Repository Structure
-
-```text
-.
-├── README.md
-└── docs/
-    ├── architecture/
-    ├── assets/
-    ├── projects/
-    ├── setup/
-    └── tools/
-```
-
----
-
-## 🚀 Future Improvements
-
-* Expand Kerberoasting and SPN abuse detections
-* Add lateral movement detections (Pass-the-Hash, WMI)
-* Enable PowerShell Script Block logging
-* Build dashboards for authentication anomalies
-* Document full investigation playbooks
-
----
-
-## ⚠️ Disclaimer
-
-This lab is fully self-contained and intended for educational and portfolio purposes only.
-All offensive techniques were executed only within a controlled environment owned by the lab operator.
-
+This lab was built in a private, controlled environment for educational and portfolio purposes only. All attack simulations were performed against systems owned and controlled by the lab owner.
