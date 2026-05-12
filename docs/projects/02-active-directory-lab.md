@@ -34,13 +34,11 @@ Create the Windows Server VM that will become the domain controller, promote it 
 
 ### 2. Renamed the Server to DC01
 
-![Renaming Server](../assets/DC01%20setup/1%20naming%20server.png)
-
 After Windows installed and the first login was complete:
 
-```powershell
-Rename-Computer -NewName "DC01" -Restart
-```
+![Renaming Server](../assets/DC01%20setup/1%20naming%20server.png)
+
+
 
 ### 3. Configured a Static IP
 
