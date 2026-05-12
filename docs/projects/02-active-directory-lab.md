@@ -59,7 +59,7 @@ Verified the static IP was applied:
 Restart-Computer
 ```
 
-### 5. Installed Active Directory Domain Services
+### 5. Installed Active Directory Domain Services Using Server Manager
 
 After logging back in as local Administrator:
 
@@ -71,7 +71,7 @@ After logging back in as local Administrator:
 ### 6. Promoted the Server to Domain Controller
 
 
-Created a new forest with the domain name `corp.lab`:
+Promoted DC01 to a domain controller and created a new forest named `corp.lab` using the Active Directory Domain Services Configuration Wizard:
 
 ![set up domain controller](../assets/DC01%20setup/5%20setting%20up%20domain%20controller.png)
 
