@@ -257,4 +257,4 @@ Based on the attack simulation, the following mitigations apply:
 
 ## Next Steps
 
-- [Project 12 — Custom Detection Rules](12-custom-detection-rules.md) — Turn these observations into automated Elastic detection rules that fire alerts
+- [Project 11 — Custom Detection Rules](11-custom-detection-rules.md) — Turn these observations into automated Elastic detection rules that fire alerts

@@ -179,4 +179,4 @@ http://192.168.0.50:5601
 
 ## Next Steps
 
-→ [Project 09 — Elastic SIEM Setup & Agent Enrollment](09-elastic-siem-setup.md)
+→ [Project 09 — Elastic SIEM Setup & Agent Enrollment](09-fleet-and-agent-enrollment.md)

@@ -303,4 +303,4 @@ event.code: "1" and event.module: "sysmon"
 
 ## Next Steps
 
-- [Project 14 — PowerShell Logging Tuning](14-powershell-logging-tuning.md) — Enable Script Block Logging to catch encoded PowerShell commands used in lateral movement
+- [Project 13 — PowerShell Logging Tuning](13-powershell-logging-tuning.md) — Enable Script Block Logging to catch encoded PowerShell commands used in lateral movement

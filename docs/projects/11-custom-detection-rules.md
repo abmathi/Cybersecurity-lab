@@ -326,5 +326,5 @@ Recommended rules to enable for this lab:
 
 ## Next Steps
 
-- [Project 13 — Lateral Movement Lab](13-lateral-movement-lab.md) — Simulate lateral movement to WS01 and detect with these rules
-- [Project 14 — PowerShell Logging Tuning](14-powershell-logging-tuning.md) — Enable Script Block Logging to detect encoded PowerShell commands
+- [Project 12 — Lateral Movement Lab](12-lateral-movement-lab.md) — Simulate lateral movement to WS01 and detect with these rules
+- [Project 13 — PowerShell Logging Tuning](13-powershell-logging-tuning.md) — Enable Script Block Logging to detect encoded PowerShell commands
