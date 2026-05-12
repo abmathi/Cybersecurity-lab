@@ -82,39 +82,7 @@ In Event Viewer on DC01:
      - Security log (all events)
      - `Microsoft-Windows-Sysmon/Operational` (all events)
 
-Alternatively via command line, using a subscription XML:
 
-```xml
-<!-- C:\WEF\ws01-subscription.xml -->
-<Subscription xmlns="http://schemas.microsoft.com/2006/03/windows/events/subscription">
-  <SubscriptionId>Lab-WS01-Subscription</SubscriptionId>
-  <SubscriptionType>SourceInitiated</SubscriptionType>
-  <Description>Collect Security and Sysmon logs from WS01</Description>
-  <Enabled>true</Enabled>
-  <Uri>http://schemas.microsoft.com/wbem/wsman/1/windows/EventLog</Uri>
-  <ConfigurationMode>MinLatency</ConfigurationMode>
-  <Query>
-    <![CDATA[
-      <QueryList>
-        <Query Id="0">
-          <Select Path="Security">*</Select>
-          <Select Path="Microsoft-Windows-Sysmon/Operational">*</Select>
-        </Query>
-      </QueryList>
-    ]]>
-  </Query>
-  <ReadExistingEvents>false</ReadExistingEvents>
-  <TransportName>http</TransportName>
-  <ContentFormat>RenderedText</ContentFormat>
-  <Locale Language="en-US"/>
-  <LogFile>ForwardedEvents</LogFile>
-  <AllowedSourceDomainComputers>O:NSG:BAD:P(A;;GA;;;DC)S:</AllowedSourceDomainComputers>
-</Subscription>
-```
-
-```powershell
-wecutil cs C:\WEF\ws01-subscription.xml
-```
 
 ### 4. Configured WS01 as a Forwarding Client via GPO
 
