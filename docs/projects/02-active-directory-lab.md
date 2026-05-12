@@ -1,6 +1,6 @@
 # Project 02 — Active Directory Domain Setup
 
-**Skills:** Windows Server, Active Directory Domain Services, DNS, PowerShell, Organisational Units
+**Skills:** Windows Server, Active Directory Domain Services, DNS, Server Manager GUI, Active Directory Users and Computers, Organizational Units
 
 ---
 
@@ -44,27 +44,14 @@ Rename-Computer -NewName "DC01" -Restart
 
 ### 3. Configured a Static IP
 
-![static ip setup](../assets/DC01%20setup/2%20ip%20configuration.png)
-
 After reboot, set a static IP so DNS remains stable when the system becomes a DC:
 
-```powershell
-# Run as Administrator
-New-NetIPAddress `
-  -InterfaceAlias "Ethernet" `
-  -IPAddress 192.168.0.10 `
-  -PrefixLength 24 `
-  -DefaultGateway 192.168.0.1
 
-# Point DNS to itself (required before DC promotion)
-Set-DnsClientServerAddress -InterfaceAlias "Ethernet" -ServerAddresses 127.0.0.1
-```
+![static ip setup](../assets/DC01%20setup/2%20ip%20configuration.png)
+
 
 Verified the static IP was applied:
 
-```powershell
-ipconfig /all
-```
 
 ![ip verification](../assets/DC01%20setup/3%20network%20verification.png)
 
@@ -76,40 +63,28 @@ Restart-Computer
 
 ### 5. Installed Active Directory Domain Services
 
-![installl active directory](../assets/DC01%20setup/4%20setting%20up%20roles.png)
-
 After logging back in as local Administrator:
 
-```powershell
-Install-WindowsFeature -Name AD-Domain-Services -IncludeManagementTools
-```
+
+![installl active directory](../assets/DC01%20setup/4%20setting%20up%20roles.png)
+
+
 
 ### 6. Promoted the Server to Domain Controller
 
-![set up domain controller](../assets/DC01%20setup/5%20setting%20up%20domain%20controller.png)
 
 Created a new forest with the domain name `corp.lab`:
 
-```powershell
-Install-ADDSForest `
-  -DomainName "corp.lab" `
-  -DomainNetbiosName "CORP" `
-  -InstallDns `
-  -Force
-```
+![set up domain controller](../assets/DC01%20setup/5%20setting%20up%20domain%20controller.png)
 
 The server rebooted automatically. After reboot, logged in as `CORP\Administrator`.
+
 
 ### 7. Created Organisational Units
 
 ![created OUs](../assets/DC01%20setup/7%20created%20OUs.png)
 
-```powershell
-New-ADOrganizationalUnit -Name "Corp Users"     -Path "DC=corp,DC=lab"
-New-ADOrganizationalUnit -Name "Corp Admins"    -Path "DC=corp,DC=lab"
-New-ADOrganizationalUnit -Name "Service Accounts" -Path "DC=corp,DC=lab"
-New-ADOrganizationalUnit -Name "Workstations"   -Path "DC=corp,DC=lab"
-```
+
 
 ### 8. Created Domain Users
 
@@ -117,55 +92,13 @@ New-ADOrganizationalUnit -Name "Workstations"   -Path "DC=corp,DC=lab"
 
 ![admin accounts](../assets/DC01%20setup/9%20created%20admin.png)
 
-```powershell
-# Standard domain users
-New-ADUser -Name "John Smith"   -SamAccountName "jsmith" `
-  -UserPrincipalName "jsmith@corp.lab" `
-  -Path "OU=Corp Users,DC=corp,DC=lab" `
-  -AccountPassword (ConvertTo-SecureString "Password123!" -AsPlainText -Force) `
-  -Enabled $true
 
-New-ADUser -Name "Mike Brown"   -SamAccountName "mbrown" `
-  -UserPrincipalName "mbrown@corp.lab" `
-  -Path "OU=Corp Users,DC=corp,DC=lab" `
-  -AccountPassword (ConvertTo-SecureString "Password123!" -AsPlainText -Force) `
-  -Enabled $true
-
-New-ADUser -Name "Sarah Jones"  -SamAccountName "sjones" `
-  -UserPrincipalName "sjones@corp.lab" `
-  -Path "OU=Corp Users,DC=corp,DC=lab" `
-  -AccountPassword (ConvertTo-SecureString "Password123!" -AsPlainText -Force) `
-  -Enabled $true
-
-# Privileged admin account
-New-ADUser -Name "AD Admin"     -SamAccountName "aadmin" `
-  -UserPrincipalName "aadmin@corp.lab" `
-  -Path "OU=Corp Admins,DC=corp,DC=lab" `
-  -AccountPassword (ConvertTo-SecureString "Admin@1234!" -AsPlainText -Force) `
-  -Enabled $true
-
-Add-ADGroupMember -Identity "Domain Admins" -Members "aadmin"
-```
 
 ### 9. Created Service Accounts
 
 ![service accounts](../assets/DC01%20setup/10%20created%20service%20accounts.png)
 
-```powershell
-# SQL service account (used as a Kerberoasting target in later labs)
-New-ADUser -Name "svc-sql" -SamAccountName "svc-sql" `
-  -UserPrincipalName "svc-sql@corp.lab" `
-  -Path "OU=Service Accounts,DC=corp,DC=lab" `
-  -AccountPassword (ConvertTo-SecureString "Sqlservice1!" -AsPlainText -Force) `
-  -Enabled $true
 
-# HTTP service account
-New-ADUser -Name "svc-http" -SamAccountName "svc-http" `
-  -UserPrincipalName "svc-http@corp.lab" `
-  -Path "OU=Service Accounts,DC=corp,DC=lab" `
-  -AccountPassword (ConvertTo-SecureString "Httpservice1!" -AsPlainText -Force) `
-  -Enabled $true
-```
 
 ### 10. Verified Domain Health
 
