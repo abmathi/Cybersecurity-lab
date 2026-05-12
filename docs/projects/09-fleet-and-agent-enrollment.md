@@ -234,7 +234,5 @@ By establishing this logging pipeline, the following MITRE ATT&CK techniques bec
 
 ## Next Steps
 
-- [Project 05 — Endpoint Telemetry with Sysmon](05-sysmon-setup.md) — Sysmon installation and configuration on DC01 and WS01
-- [Project 06 — Centralized Logging with WEF](06-wef-logging.md) — WEF and Sysmon configuration walkthrough
-- [Project 11 — Kerberoasting Detection](11-kerberoasting-detection.md) — Simulate a Kerberoast and detect via Event ID 4769
-- [Project 12 — Custom Detection Rules](12-custom-detection-rules.md) — Build Elastic detection rules for common AD attacks
+- [Project 10 — Kerberoasting Detection](10-kerberoasting-detection.md) — Simulate a Kerberoast and detect via Event ID 4769
+- [Project 11 — Custom Detection Rules](11-custom-detection-rules.md) — Build Elastic detection rules for common AD attacks
