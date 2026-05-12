@@ -44,10 +44,7 @@ Rename-Computer -NewName "WS01" -Restart
 
 Before joining the domain, the workstation's DNS server must point to DC01 so it can resolve `corp.lab`:
 
-```powershell
-# Run as Administrator
-Set-DnsClientServerAddress -InterfaceAlias "Ethernet" -ServerAddresses 192.168.0.10
-```
+![static ip](../assets/WS01%20setup/2%20set%20static%20ip.png)
 
 Verify DNS resolves the domain:
 
@@ -114,7 +111,7 @@ klist
 | VM clock skew causing Kerberos errors | Synchronized the VM clock via VirtualBox Guest Additions and confirmed both VMs matched DC01 time |
 | Login as domain user failed after join | Waited for DC01 to finish propagating the computer account; reboot loop resolved it |
 
-![static ip](../assets/WS01%20setup/2%20set%20static%20ip.png)
+
 
 ![time sync](../assets/WS01%20setup/6%20fixed%20time%20sync%20issue%20and%20forced%20group%20policy%20update.png)
 
