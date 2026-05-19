@@ -73,7 +73,7 @@ nslookup corp.lab 192.168.0.10
 
 ### 1.2 Enumerate SPNs (Reconnaissance Phase)
 
-![enumerating](../assets/elastic/kerberoasting%20command%20on%20kali.png)
+![enumerating](../assets/elastic/kerberoasting-command-on-kali.png)
 
 Before requesting tickets, enumerate which accounts have SPNs registered:
 
@@ -170,7 +170,7 @@ Look for these fields in the 4769 events:
 
 ### 2.4 Build a Discover Filter for Kerberoasting
 
-![enumerating](../assets/elastic/kerberoasting%20rule%20created.png)
+![enumerating](../assets/elastic/kerberoasting-rule-created.png)
 
 ```kql
 event.code: "4769"

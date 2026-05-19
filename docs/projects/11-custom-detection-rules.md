@@ -35,7 +35,7 @@ In Kibana:
 
 ## Part 2: Rule 1 — Excessive Failed Logons (Brute Force / Password Spray)
 
-![failed login rule](../assets/elastic/custom%20rule%20for%20failed%20logins.png)
+![failed login rule](../assets/elastic/custom-rule-for-failed-logins.png)
 
 ### 2.1 Rule Type: Threshold
 
@@ -94,7 +94,7 @@ This fires a separate alert for each targeted username that hits 5+ failures.
 
 ### 2.3 Test the Rule
 
-![alerts](../assets/elastic/alerts%20coming%20in.png)
+![alerts](../assets/elastic/alerts-coming-in.png)
 
 Simulate failed logins from Kali:
 
@@ -156,7 +156,7 @@ event.code: "4769"
 - `TicketEncryptionType: "0x17"` — RC4-HMAC encryption, which is easily crackable and abnormal in modern environments (AES should be used)
 - `not ServiceName: "*$"` — excludes machine accounts (e.g., `DC01$`) which routinely use RC4; keeps focus on user service accounts
 
-![custom rule](../assets/elastic/kerberoasting%20rule%20created.png)
+![custom rule](../assets/elastic/kerberoasting-rule-created.png)
 
 **Step 2: About rule**
 
@@ -183,7 +183,7 @@ event.code: "4769"
 
 ### 3.3 Test the Rule
 
-![testing rule](../assets/elastic/kerberoasting%20command%20on%20kali.png)
+![testing rule](../assets/elastic/kerberoasting-command-on-kali.png)
 
 Run the Kerberoasting simulation from [Project 11](11-kerberoasting-detection.md):
 
@@ -196,7 +196,7 @@ impacket-GetUserSPNs corp.lab/jsmith:'Password123!' \
 
 In Kibana: **Security → Alerts** — the rule should fire within 5 minutes.
 
-![alerts firing](../assets/elastic/kerberoasting%20alerts%20coming%20in.png)
+![alerts firing](../assets/elastic/kerberoasting-alerts-coming-in.png)
 
 ### 3.4 Investigate the Alert
 
@@ -285,7 +285,7 @@ For lab-generated test alerts:
 
 ## Part 6: Review Pre-Built Elastic Rules
 
-![prebuilt alerts](../assets/elastic/installing%20pre%20built%20rules.png)
+![prebuilt alerts](../assets/elastic/installing-pre-built-rules.png)
 
 Elastic ships 600+ pre-built detection rules mapped to MITRE ATT&CK. Enable relevant ones for the lab:
 
