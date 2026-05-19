@@ -30,7 +30,7 @@ Create a domain-joined Windows workstation (WS01) that simulates an enterprise e
   - Network adapter: **Bridged Adapter** (same home LAN as DC01 and Kali)
 - Installed Windows without a product key
 
-![installed windows 10](../assets/WS01%20setup/1%20installing%20windows%2010%20pro.png)
+![installed windows 10](../assets/WS01%20setup/1-installing-windows-10-pro.png)
 
 ### 2. Renamed the System to WS01
 
@@ -44,7 +44,7 @@ Rename-Computer -NewName "WS01" -Restart
 
 Before joining the domain, the workstation's DNS server must point to DC01 so it can resolve `corp.lab`:
 
-![static ip](../assets/WS01%20setup/2%20set%20static%20ip.png)
+![static ip](../assets/WS01%20setup/2-set-static-ip.png)
 
 Verify DNS resolves the domain:
 
@@ -113,7 +113,7 @@ klist
 
 
 
-![time sync](../assets/WS01%20setup/6%20fixed%20time%20sync%20issue%20and%20forced%20group%20policy%20update.png)
+![time sync](../assets/WS01%20setup/6-fixed-time-sync-issue-and-forced-group-policy-update.png)
 
 ---
 

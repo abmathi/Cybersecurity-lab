@@ -36,7 +36,7 @@ Create the Windows Server VM that will become the domain controller, promote it 
 
 After Windows installed and the first login was complete:
 
-![Renaming Server](../assets/DC01%20setup/1%20naming%20server.png)
+![Renaming Server](../assets/DC01%20setup/1-naming-server.png)
 
 
 
@@ -45,13 +45,13 @@ After Windows installed and the first login was complete:
 After reboot, set a static IP so DNS remains stable when the system becomes a DC:
 
 
-![static ip setup](../assets/DC01%20setup/2%20ip%20configuration.png)
+![static ip setup](../assets/DC01%20setup/2-ip-configuration.png)
 
 
 Verified the static IP was applied:
 
 
-![ip verification](../assets/DC01%20setup/3%20network%20verification.png)
+![ip verification](../assets/DC01%20setup/3-network-verification.png)
 
 ### 4. Rebooted the Server
 
@@ -64,7 +64,7 @@ Restart-Computer
 After logging back in as local Administrator:
 
 
-![installl active directory](../assets/DC01%20setup/4%20setting%20up%20roles.png)
+![installl active directory](../assets/DC01%20setup/4-setting-up-roles.png)
 
 
 
@@ -73,28 +73,28 @@ After logging back in as local Administrator:
 
 Promoted DC01 to a domain controller and created a new forest named `corp.lab` using the Active Directory Domain Services Configuration Wizard:
 
-![set up domain controller](../assets/DC01%20setup/5%20setting%20up%20domain%20controller.png)
+![set up domain controller](../assets/DC01%20setup/5-setting-up-domain-controller.png)
 
 The server rebooted automatically. After reboot, logged in as `CORP\Administrator`.
 
 
 ### 7. Created Organisational Units
 
-![created OUs](../assets/DC01%20setup/7%20created%20OUs.png)
+![created OUs](../assets/DC01%20setup/7-created-OUs.png)
 
 
 
 ### 8. Created Domain Users
 
-![created domain users](../assets/DC01%20setup/8%20created%20standard%20users.png)
+![created domain users](../assets/DC01%20setup/8-created-standard-users.png)
 
-![admin accounts](../assets/DC01%20setup/9%20created%20admin.png)
+![admin accounts](../assets/DC01%20setup/9-created-admin.png)
 
 
 
 ### 9. Created Service Accounts
 
-![service accounts](../assets/DC01%20setup/10%20created%20service%20accounts.png)
+![service accounts](../assets/DC01%20setup/10-created-service-accounts.png)
 
 
 

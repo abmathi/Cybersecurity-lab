@@ -131,7 +131,7 @@ cd "C:\Tools\elastic-agent-8.x.x-windows-x86_64"
 
 ### 3.3 Verify Agent is Enrolled
 
-![Verify Enrollment](../assets/WS0101%20setup/9-ws01-enrolled.png)
+![Verify Enrollment](../assets/WS01%20setup/9-ws01-enrolled.png)
 
 ```powershell
 # Check Windows service
@@ -146,7 +146,7 @@ In Kibana: **Fleet → Agents** — DC01 should appear with status **Healthy**.
 
 ### 4.1 Check Logs in Discover
 
-![Check Logs](../assets/elastic/logs%20flowing.png)
+![Check Logs](../assets/elastic/logs-flowing.png)
 
 In Kibana: **Discover**
 
